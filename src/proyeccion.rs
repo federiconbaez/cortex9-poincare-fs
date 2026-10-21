@@ -73,6 +73,7 @@ fn nombre_valido(n: &str) -> bool {
     !n.is_empty()
         && n.len() <= 200
         && !n.starts_with('.')
+        && !n.starts_with('@')
         && !n.contains('/')
         && !n.contains('\0')
         && !n.ends_with(".txt")

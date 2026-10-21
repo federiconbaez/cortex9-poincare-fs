@@ -110,6 +110,54 @@ pub fn idf(textos: &[&str]) -> Vec<f64> {
     df.iter().map(|d| ((1.0 + n) / (1.0 + d)).ln() + 1.0).collect()
 }
 
+/// Igual que [`tf`] pero sin reservar un `String` por rasgo: el FNV-1a se
+/// calcula sobre los mismos bytes (`w:` + palabra, `t:` + trigrama). Da
+/// exactamente el mismo vector (test `tf_rapido_igual_a_tf`).
+fn tf_rapido(texto: &str) -> Vec<f64> {
+    let mut v = vec![0.0; DIM];
+    let mut sumar = |h: u64| {
+        let i = (h % DIM as u64) as usize;
+        v[i] += if (h >> 63) == 0 { 1.0 } else { -1.0 };
+    };
+    let base = fnv1a(b"");
+    let alimentar = |mut h: u64, bytes: &[u8]| {
+        for &b in bytes {
+            h ^= b as u64;
+            h = h.wrapping_mul(0x0000_0100_0000_01b3);
+        }
+        h
+    };
+    let mut cs: Vec<char> = Vec::new();
+    let mut buf = [0u8; 4];
+    for palabra in texto.split(|c: char| !c.is_alphanumeric()).filter(|p| p.chars().count() >= 2) {
+        let p = palabra.to_lowercase();
+        sumar(alimentar(alimentar(base, b"w:"), p.as_bytes()));
+        cs.clear();
+        cs.push('<');
+        cs.extend(p.chars());
+        cs.push('>');
+        for w in cs.windows(3) {
+            let mut h = alimentar(base, b"t:");
+            for ch in w {
+                h = alimentar(h, ch.encode_utf8(&mut buf).as_bytes());
+            }
+            sumar(h);
+        }
+    }
+    v
+}
+
+/// Como [`vectorizar`], más rápido (sin reservar por rasgo); resultado idéntico bit a bit.
+pub fn vectorizar_rapido(texto: &str, idf: &[f64]) -> Vec<f64> {
+    let mut w: Vec<f64> = tf_rapido(texto)
+        .iter()
+        .zip(idf)
+        .map(|(x, i)| if *x == 0.0 { 0.0 } else { x.signum() * (1.0 + x.abs().ln()) * i })
+        .collect();
+    normalizar(&mut w);
+    w
+}
+
 /// Vector TF-IDF normalizado de un texto cualquiera (p. ej. una consulta) con el IDF de un corpus.
 /// Para un documento del corpus da exactamente la fila de [`tfidf`].
 pub fn vectorizar(texto: &str, idf: &[f64]) -> Vec<f64> {
@@ -232,6 +280,16 @@ mod tests {
         let i = idf(&t);
         for (k, x) in t.iter().enumerate() {
             assert_eq!(vectorizar(x, &i), m[k]);
+        }
+    }
+
+    #[test]
+    fn tf_rapido_igual_a_tf() {
+        let t = ["el gato duerme", "Ñandú ÁRBOL über-straße x", "kernel linux ebpf 2026 a", "", "日本語 テキスト"];
+        let i = idf(&t);
+        for x in t {
+            assert_eq!(tf_rapido(x), tf(x));
+            assert_eq!(vectorizar_rapido(x, &i), vectorizar(x, &i));
         }
     }
 

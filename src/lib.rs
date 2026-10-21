@@ -4,6 +4,7 @@
 //! sobre el disco de Poincaré y `cd` aplica una transformación de Möbius.
 pub mod ajuste;
 pub mod bola;
+pub mod directo;
 pub mod embed;
 pub mod es;
 pub mod fs;

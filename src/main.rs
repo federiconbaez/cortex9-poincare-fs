@@ -9,6 +9,7 @@ use std::process::ExitCode;
 use std::time::{Duration, Instant};
 
 mod valor;
+mod valor_directo;
 
 const USO: &str = "uso:
   poincare-fs montar <corpus> <punto> [opciones]   monta (termina con `fusermount3 -u <punto>`)
@@ -19,6 +20,7 @@ const USO: &str = "uso:
   poincare-fs es-info <corpus>                     lee el corpus e informa el modo de E/S usado
   poincare-fs generar <stdlib|sintetico> <n> <dir> [--python DIR] [--semilla S]
   poincare-fs bench <corpus> [--pasos N] [--cache N] [--indice F] [--semilla S]
+  poincare-fs valor-directo <corpus> [--consultas F.tsv] [--reservado DIR] [--reps N] [--tsv F] [--exportar DIR]
   poincare-fs valor <corpus> [--consultas F.tsv] [--reps N] [--semillas N] [--tsv salida.tsv] [--exportar DIR]
 opciones: --k N  --radio R  --memoria G  --dim D  --epocas E  --indice F  --cache N
 E/S: POINCARE_IO=auto|uring|pread";
@@ -356,6 +358,14 @@ fn run() -> Result<(), String> {
             a.num("semillas", 200)?,
             a.flags.get("tsv").map(Path::new),
             a.flags.get("exportar").map(Path::new),
+        )?,
+        "valor-directo" => valor_directo::correr(
+            Path::new(a.pos(1)?),
+            Path::new(a.flags.get("consultas").map(|s| s.as_str()).unwrap_or("bench/consultas-stdlib.tsv")),
+            Path::new(a.flags.get("reservado").map(|s| s.as_str()).unwrap_or("bench/heldout")),
+            a.num("reps", 5)?,
+            Path::new(a.flags.get("tsv").map(|s| s.as_str()).unwrap_or("bench/valor3.tsv")),
+            Path::new(a.flags.get("exportar").map(|s| s.as_str()).unwrap_or("/tmp/pfs-valor/exp3")),
         )?,
         _ => return Err(USO.into()),
     }

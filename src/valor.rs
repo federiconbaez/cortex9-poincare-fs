@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
-const STOP: &[&str] = &[
+pub(crate) const STOP: &[&str] = &[
     "the", "a", "an", "and", "or", "of", "to", "in", "on", "for", "with", "by", "is", "are", "be", "it", "this",
     "that", "from", "as", "at", "into", "its", "their", "them", "then", "than", "which", "when", "where", "how",
     "what", "who", "was", "were", "has", "have", "had", "not", "no", "but", "if", "else", "can", "will", "would",
@@ -33,18 +33,18 @@ const STOP: &[&str] = &[
     "into", "because", "being", "been", "after", "before", "while", "until", "since", "whether", "otherwise",
 ];
 
-fn tema(n: &str) -> &str {
+pub(crate) fn tema(n: &str) -> &str {
     n.split('-').next().unwrap_or("")
 }
 
-fn palabras(t: &str) -> Vec<String> {
+pub(crate) fn palabras(t: &str) -> Vec<String> {
     t.split(|c: char| !(c.is_alphanumeric() || c == '_'))
         .filter(|p| !p.is_empty())
         .map(|p| p.to_lowercase())
         .collect()
 }
 
-fn palabras_consulta(q: &str) -> Vec<String> {
+pub(crate) fn palabras_consulta(q: &str) -> Vec<String> {
     let mut v: Vec<String> = palabras(q).into_iter().filter(|w| !STOP.contains(&w.as_str())).collect();
     let mut vistos = HashSet::new();
     v.retain(|w| vistos.insert(w.clone()));
@@ -53,7 +53,7 @@ fn palabras_consulta(q: &str) -> Vec<String> {
 
 /// Las 3 palabras más frecuentes (≥ 4 letras, sin vacías) de un documento: lo que
 /// un usuario le daría a `rg` para buscar «más como este».
-fn claves_documento(t: &str) -> Vec<String> {
+pub(crate) fn claves_documento(t: &str) -> Vec<String> {
     let mut cuenta: HashMap<String, (usize, usize)> = HashMap::new();
     for (pos, w) in palabras(t).into_iter().enumerate() {
         if w.chars().count() < 4 || STOP.contains(&w.as_str()) || w.chars().all(|c| c.is_ascii_digit()) {
@@ -66,7 +66,7 @@ fn claves_documento(t: &str) -> Vec<String> {
     v.into_iter().take(3).map(|x| x.0).collect()
 }
 
-fn percentil(v: &[f64], p: f64) -> f64 {
+pub(crate) fn percentil(v: &[f64], p: f64) -> f64 {
     let mut v = v.to_vec();
     v.sort_by(f64::total_cmp);
     if v.is_empty() {
@@ -81,14 +81,14 @@ fn montado(p: &Path) -> bool {
     m.lines().any(|l| l.split(' ').nth(1) == Some(&p))
 }
 
-struct Montaje {
+pub(crate) struct Montaje {
     punto: PathBuf,
     hijo: Option<Child>,
-    segundos: f64,
+    pub(crate) segundos: f64,
 }
 
 impl Montaje {
-    fn new(corpus: &Path, punto: &Path) -> Result<Montaje, String> {
+    pub(crate) fn new(corpus: &Path, punto: &Path) -> Result<Montaje, String> {
         std::fs::create_dir_all(punto).map_err(|e| e.to_string())?;
         let exe = std::env::current_exe().map_err(|e| e.to_string())?;
         let t0 = Instant::now();
@@ -121,7 +121,7 @@ impl Drop for Montaje {
 }
 
 /// `ls -U` de un directorio montado: los `.txt` en el orden de la vista.
-fn ls_txt(dir: &Path) -> Result<Vec<String>, String> {
+pub(crate) fn ls_txt(dir: &Path) -> Result<Vec<String>, String> {
     let mut v = Vec::new();
     for e in std::fs::read_dir(dir).map_err(|e| format!("ls {}: {e}", dir.display()))? {
         let n = e.map_err(|e| e.to_string())?.file_name().to_string_lossy().into_owned();
@@ -133,7 +133,7 @@ fn ls_txt(dir: &Path) -> Result<Vec<String>, String> {
 }
 
 /// `rg` sobre el directorio en disco; devuelve los nombres ordenados por cantidad de coincidencias.
-fn rg(dir: &Path, claves: &[String]) -> Result<Vec<String>, String> {
+pub(crate) fn rg(dir: &Path, claves: &[String]) -> Result<Vec<String>, String> {
     if claves.is_empty() {
         return Ok(Vec::new());
     }
@@ -157,7 +157,7 @@ fn rg(dir: &Path, claves: &[String]) -> Result<Vec<String>, String> {
     Ok(v.into_iter().map(|x| x.0).collect())
 }
 
-fn top_tfidf(m: &[Vec<f64>], q: &[f64], excluir: Option<usize>, k: usize) -> Vec<usize> {
+pub(crate) fn top_tfidf(m: &[Vec<f64>], q: &[f64], excluir: Option<usize>, k: usize) -> Vec<usize> {
     let mut v: Vec<(usize, f64)> =
         m.iter().enumerate().filter(|(i, _)| Some(*i) != excluir).map(|(i, x)| (i, embed::coseno(x, q))).collect();
     let cmp = |a: &(usize, f64), b: &(usize, f64)| b.1.total_cmp(&a.1).then(a.0.cmp(&b.0));
@@ -359,7 +359,7 @@ fn alcanzables_bfs_g0(c: &Corpus) -> usize {
 }
 
 /// Escribe vectores como f32 little-endian contiguos (para la línea base FAISS en Python).
-fn escribir_f32(p: &Path, vs: &[Vec<f64>]) -> Result<(), String> {
+pub(crate) fn escribir_f32(p: &Path, vs: &[Vec<f64>]) -> Result<(), String> {
     let mut b = Vec::with_capacity(vs.len() * embed::DIM * 4);
     for v in vs {
         for x in v {
