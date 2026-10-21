@@ -93,6 +93,11 @@ pub fn huella(pares: &[(String, Vec<u8>)], p: &ParamsAjuste) -> u64 {
     for v in [p.dim as u64, p.vecinos as u64, p.negativos as u64, p.epocas as u64, p.lr.to_bits(), p.semilla] {
         fnv(&mut h, &v.to_le_bytes());
     }
+    // Solo si el radio de retracción no es el histórico: así la huella de los
+    // índices existentes no cambia cuando se usa el valor por defecto.
+    if (p.radio - ajuste::RADIO_AJUSTE).abs() > 0.0 {
+        fnv(&mut h, &p.radio.to_bits().to_le_bytes());
+    }
     for (n, c) in pares {
         fnv(&mut h, n.as_bytes());
         fnv(&mut h, &[0]);

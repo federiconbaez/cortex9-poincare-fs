@@ -23,11 +23,21 @@ pub struct ParamsAjuste {
     pub epocas: usize,
     pub lr: f64,
     pub semilla: u64,
+    /// Radio de retracción en la bola (por defecto [`RADIO_AJUSTE`]).
+    pub radio: f64,
 }
 
 impl Default for ParamsAjuste {
     fn default() -> Self {
-        ParamsAjuste { dim: 16, vecinos: 5, negativos: 10, epocas: 0, lr: 0.3, semilla: 0x5EED_F00D }
+        ParamsAjuste {
+            dim: 16,
+            vecinos: 5,
+            negativos: 10,
+            epocas: 0,
+            lr: 0.3,
+            semilla: 0x5EED_F00D,
+            radio: RADIO_AJUSTE,
+        }
     }
 }
 
@@ -132,12 +142,12 @@ fn dist_grad(u: &[f64], v: &[f64]) -> (f64, V) {
     (d, g)
 }
 
-fn paso(u: &mut [f64], g: &[f64], coef: f64, lr: f64) {
+fn paso(u: &mut [f64], g: &[f64], coef: f64, lr: f64, radio: f64) {
     let metrica = (1.0 - bola::norma2(u)).powi(2) / 4.0;
     for (ui, gi) in u.iter_mut().zip(g) {
         *ui -= lr * coef * metrica * gi;
     }
-    bola::proyectar(u, RADIO_AJUSTE);
+    bola::proyectar(u, radio);
 }
 
 /// Ajusta los puntos de la bola a partir del grafo de vecinos.
@@ -158,6 +168,7 @@ pub fn ajustar(vecinos: &[Vec<u32>], p: ParamsAjuste) -> Vec<V> {
     let epocas = p.epocas_efectivas(n);
     let quemado = 10.min(epocas / 4);
     let mut negs: Vec<usize> = Vec::with_capacity(p.negativos);
+    let radio = if p.radio > 0.0 && p.radio < 1.0 { p.radio } else { RADIO_AJUSTE };
     for ep in 0..epocas {
         let lr = if ep < quemado { p.lr / 10.0 } else { p.lr };
         // Fisher–Yates determinista
@@ -204,10 +215,101 @@ pub fn ajustar(vecinos: &[Vec<u32>], p: ParamsAjuste) -> Vec<V> {
                     *a += c * b;
                 }
             }
-            paso(&mut x[i], &gi, 1.0, lr);
-            paso(&mut x[j], &gs_k[0], coefs[0], lr);
+            paso(&mut x[i], &gi, 1.0, lr, radio);
+            paso(&mut x[j], &gs_k[0], coefs[0], lr, radio);
             for (t, &k) in negs.iter().enumerate() {
-                paso(&mut x[k], &gs_k[t + 1], coefs[t + 1], lr);
+                paso(&mut x[k], &gs_k[t + 1], coefs[t + 1], lr, radio);
+            }
+        }
+    }
+    x
+}
+
+/// Distancia euclídea y gradiente ∂d/∂u (= (u−v)/|u−v|).
+fn dist_grad_eucl(u: &[f64], v: &[f64]) -> (f64, V) {
+    let mut g: V = u.iter().zip(v).map(|(a, b)| a - b).collect();
+    let d = bola::norma(&g);
+    if d > 1e-15 {
+        g.iter_mut().for_each(|x| *x /= d);
+    }
+    (d, g)
+}
+
+fn paso_eucl(u: &mut [f64], g: &[f64], coef: f64, lr: f64, radio: f64) {
+    for (ui, gi) in u.iter_mut().zip(g) {
+        *ui -= lr * coef * gi;
+    }
+    bola::proyectar(u, radio);
+}
+
+/// Ajuste euclídeo nativo: mismo objetivo, misma semilla, misma secuencia de
+/// negativos y mismo Fisher–Yates que [`ajustar`]; `d = |u−v|` y SGD plano.
+/// `p.radio` se interpreta como cota euclídea (típicamente `2·artanh(r_bola)`).
+pub fn ajustar_euclideo(vecinos: &[Vec<u32>], p: ParamsAjuste) -> Vec<V> {
+    let n = vecinos.len();
+    let mut rng = Rng::new(p.semilla);
+    let mut x: Vec<V> = (0..n)
+        .map(|_| (0..p.dim).map(|_| (rng.uniforme() - 0.5) * 2e-3).collect())
+        .collect();
+    if n < 2 {
+        return x;
+    }
+    let mut pares: Vec<(u32, u32)> = vecinos
+        .iter()
+        .enumerate()
+        .flat_map(|(i, vs)| vs.iter().map(move |&j| (i as u32, j)))
+        .collect();
+    let epocas = p.epocas_efectivas(n);
+    let quemado = 10.min(epocas / 4);
+    let mut negs: Vec<usize> = Vec::with_capacity(p.negativos);
+    let radio = if p.radio > 0.0 { p.radio } else { 2.0 * RADIO_AJUSTE.atanh() };
+    for ep in 0..epocas {
+        let lr = if ep < quemado { p.lr / 10.0 } else { p.lr };
+        for k in (1..pares.len()).rev() {
+            let r = rng.indice(k + 1);
+            pares.swap(k, r);
+        }
+        for &(i, j) in &pares {
+            let (i, j) = (i as usize, j as usize);
+            negs.clear();
+            let mut intentos = 0;
+            while negs.len() < p.negativos && intentos < 4 * p.negativos {
+                intentos += 1;
+                let k = rng.indice(n);
+                if k != i && !vecinos[i].contains(&(k as u32)) {
+                    negs.push(k);
+                }
+            }
+            let (dij, gij) = dist_grad_eucl(&x[i], &x[j]);
+            let (_, gji) = dist_grad_eucl(&x[j], &x[i]);
+            let mut ds = vec![dij];
+            let mut gs_i = vec![gij];
+            let mut gs_k = vec![gji];
+            for &k in &negs {
+                let (dik, gik) = dist_grad_eucl(&x[i], &x[k]);
+                let (_, gki) = dist_grad_eucl(&x[k], &x[i]);
+                ds.push(dik);
+                gs_i.push(gik);
+                gs_k.push(gki);
+            }
+            let mn = ds.iter().cloned().fold(f64::INFINITY, f64::min);
+            let ex: Vec<f64> = ds.iter().map(|d| (-(d - mn)).exp()).collect();
+            let z: f64 = ex.iter().sum();
+            let coefs: Vec<f64> = ex
+                .iter()
+                .enumerate()
+                .map(|(t, e)| if t == 0 { 1.0 - e / z } else { -e / z })
+                .collect();
+            let mut gi = vec![0.0; p.dim];
+            for (g, c) in gs_i.iter().zip(&coefs) {
+                for (a, b) in gi.iter_mut().zip(g) {
+                    *a += c * b;
+                }
+            }
+            paso_eucl(&mut x[i], &gi, 1.0, lr, radio);
+            paso_eucl(&mut x[j], &gs_k[0], coefs[0], lr, radio);
+            for (t, &k) in negs.iter().enumerate() {
+                paso_eucl(&mut x[k], &gs_k[t + 1], coefs[t + 1], lr, radio);
             }
         }
     }
@@ -293,6 +395,7 @@ mod tests {
     fn ajuste_determinista_y_dentro_de_la_bola() {
         let vecinos = vec![vec![1], vec![0], vec![3], vec![2]];
         let p = ParamsAjuste { dim: 4, vecinos: 1, negativos: 2, epocas: 50, ..Default::default() };
+        let _ = p.radio;
         let a = ajustar(&vecinos, p);
         let b = ajustar(&vecinos, p);
         assert_eq!(a, b);
@@ -310,5 +413,36 @@ mod tests {
         let w = vec![0.3, 0.4, 0.5];
         let (a, b) = a_disco(&w, &base);
         assert!(2.0 * (a.hypot(b)).atanh() <= bola::distancia_al_origen(&w) + 1e-12);
+    }
+
+    #[test]
+    fn euclideo_determinista_y_dentro() {
+        let vecinos = vec![vec![1], vec![0], vec![3], vec![2]];
+        let p = ParamsAjuste {
+            dim: 4,
+            vecinos: 1,
+            negativos: 2,
+            epocas: 50,
+            radio: 3.664,
+            ..Default::default()
+        };
+        let a = ajustar_euclideo(&vecinos, p);
+        let b = ajustar_euclideo(&vecinos, p);
+        assert_eq!(a, b);
+        for x in &a {
+            assert!(bola::norma(x) <= p.radio + 1e-12);
+        }
+        assert!(bola::norma(&a[0].iter().zip(&a[1]).map(|(u, v)| u - v).collect::<Vec<_>>())
+            < bola::norma(&a[0].iter().zip(&a[2]).map(|(u, v)| u - v).collect::<Vec<_>>()));
+    }
+
+    #[test]
+    fn radio_por_defecto_invariante() {
+        // Con radio = RADIO_AJUSTE el ajuste hiperbólico coincide bit a bit con el histórico.
+        let vecinos = vec![vec![1, 2], vec![0, 2], vec![0, 1], vec![0]];
+        let p = ParamsAjuste { dim: 4, vecinos: 2, negativos: 2, epocas: 20, ..Default::default() };
+        let mut q = p;
+        q.radio = RADIO_AJUSTE;
+        assert_eq!(ajustar(&vecinos, p), ajustar(&vecinos, q));
     }
 }

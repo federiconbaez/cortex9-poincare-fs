@@ -10,6 +10,14 @@ de `cd` que hiciste).
 
 **Dueña:** Federica Ω Apex. Versión 0.3 (sobre la 0.2, commit `849983a`).
 
+## Geometría en datos jerárquicos (21/10/2026)
+
+Experimento pre-registrado (`bench/geometria/PREREGISTRO-geometria.md`, commit `1403985`):
+WordNet 3.0 (4000 synsets) y `linux-6.12/Documentation` (3071 `.rst`), H vs E nativa en
+d ∈ {2,4,8,16}, misma pérdida/épocas/grilla/semillas. **Veredicto:** H no gana en recall@1
+de `@similar` en ninguna celda (regla: ≥+2 pp con IC95>0 en 3 semillas). La distorsión del
+árbol sí favorece a H en 2–4d (confirmación publicada). Detalle: `bench/geometria/RESULTADOS-geometria.md`.
+
 ## v0.3: acceso directo y alcance completo (21/10/2026)
 
 Esta versión responde a la falla de valor de la v0.2. Resultados, protocolo con conjunto reservado y veredicto por celda: **[VALOR.md](VALOR.md)**.

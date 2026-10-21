@@ -22,7 +22,7 @@ const USO: &str = "uso:
   poincare-fs bench <corpus> [--pasos N] [--cache N] [--indice F] [--semilla S]
   poincare-fs valor-directo <corpus> [--consultas F.tsv] [--reservado DIR] [--reps N] [--tsv F] [--exportar DIR]
   poincare-fs valor <corpus> [--consultas F.tsv] [--reps N] [--semillas N] [--tsv salida.tsv] [--exportar DIR]
-opciones: --k N  --radio R  --memoria G  --dim D  --epocas E  --indice F  --cache N
+opciones: --k N  --radio R  --memoria G  --dim D  --epocas E  --lr L  --radio-ajuste R  --semilla-ajuste S  --indice F  --cache N
 E/S: POINCARE_IO=auto|uring|pread";
 
 struct Args {
@@ -73,6 +73,8 @@ impl Args {
                 dim: self.num("dim", d.dim)?,
                 epocas: self.num("epocas", d.epocas)?,
                 semilla: self.num("semilla-ajuste", d.semilla)?,
+                lr: self.num("lr", d.lr)?,
+                radio: self.num("radio-ajuste", d.radio)?,
                 ..d
             },
             modo_io: Modo::desde_entorno().map_err(|e| e.to_string())?,
