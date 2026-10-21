@@ -9,7 +9,8 @@ use crate::proyeccion::{self, Corpus, Params, Vista, MAX_PROFUNDIDAD};
 use fuser::{
     FileAttr, FileType, Filesystem, ReplyAttr, ReplyData, ReplyDirectory, ReplyEntry, ReplyOpen, Request,
 };
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
+use std::rc::Rc;
 use std::ffi::OsStr;
 use std::time::{Duration, SystemTime};
 
@@ -24,6 +25,61 @@ enum Nodo {
     Doc(u32),
 }
 
+/// Caché LRU de vistas por ranura (las vistas son deterministas: nunca se invalidan).
+pub struct Lru {
+    cap: usize,
+    reloj: u64,
+    mapa: HashMap<u64, (Rc<Vista>, u64)>,
+    orden: BTreeMap<u64, u64>,
+    pub aciertos: u64,
+    pub fallos: u64,
+}
+
+impl Lru {
+    pub fn new(cap: usize) -> Lru {
+        Lru { cap, reloj: 0, mapa: HashMap::new(), orden: BTreeMap::new(), aciertos: 0, fallos: 0 }
+    }
+    pub fn len(&self) -> usize {
+        self.mapa.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.mapa.is_empty()
+    }
+    pub fn obtener(&mut self, s: u64) -> Option<Rc<Vista>> {
+        self.reloj += 1;
+        let reloj = self.reloj;
+        match self.mapa.get_mut(&s) {
+            Some((v, t)) => {
+                self.orden.remove(t);
+                *t = reloj;
+                self.orden.insert(reloj, s);
+                self.aciertos += 1;
+                Some(v.clone())
+            }
+            None => {
+                self.fallos += 1;
+                None
+            }
+        }
+    }
+    pub fn insertar(&mut self, s: u64, v: Rc<Vista>) {
+        if self.cap == 0 {
+            return;
+        }
+        self.reloj += 1;
+        if let Some((_, t)) = self.mapa.remove(&s) {
+            self.orden.remove(&t);
+        }
+        while self.mapa.len() >= self.cap {
+            let Some((&t, &viejo)) = self.orden.iter().next() else { break };
+            self.orden.remove(&t);
+            self.mapa.remove(&viejo);
+        }
+        self.mapa.insert(s, (v, self.reloj));
+        self.orden.insert(self.reloj, s);
+    }
+}
+
 pub struct PoincareFs {
     corpus: Corpus,
     params: Params,
@@ -32,10 +88,15 @@ pub struct PoincareFs {
     uid: u32,
     gid: u32,
     creado: SystemTime,
+    pub cache: Lru,
 }
 
 impl PoincareFs {
     pub fn new(corpus: Corpus, params: Params) -> Self {
+        PoincareFs::con_cache(corpus, params, 4096)
+    }
+
+    pub fn con_cache(corpus: Corpus, params: Params, cache: usize) -> Self {
         let mut ranura_de = HashMap::new();
         ranura_de.insert(Vec::new(), 0);
         // SAFETY: getuid/getgid no fallan.
@@ -48,6 +109,7 @@ impl PoincareFs {
             uid,
             gid,
             creado: SystemTime::now(),
+            cache: Lru::new(cache),
         }
     }
 
@@ -84,20 +146,31 @@ impl PoincareFs {
         Some(s)
     }
 
-    fn vista(&self, s: u64) -> Vista {
-        proyeccion::vista(&self.corpus, &self.rutas[s as usize], self.params)
+    fn vista(&mut self, s: u64) -> Rc<Vista> {
+        if let Some(v) = self.cache.obtener(s) {
+            return v;
+        }
+        let v = Rc::new(proyeccion::vista(&self.corpus, &self.rutas[s as usize], self.params));
+        self.cache.insertar(s, v.clone());
+        v
     }
 
-    fn contenido(&self, n: &Nodo) -> Vec<u8> {
+    fn contenido(&mut self, n: &Nodo) -> Vec<u8> {
         match *n {
-            Nodo::Foco(s) => proyeccion::texto_foco(&self.corpus, &self.vista(s)).into_bytes(),
-            Nodo::Vista(s) => proyeccion::texto_vista(&self.corpus, &self.vista(s)).into_bytes(),
+            Nodo::Foco(s) => {
+                let v = self.vista(s);
+                proyeccion::texto_foco(&self.corpus, &v, self.params).into_bytes()
+            }
+            Nodo::Vista(s) => {
+                let v = self.vista(s);
+                proyeccion::texto_vista(&self.corpus, &v).into_bytes()
+            }
             Nodo::Doc(j) => self.corpus.docs[j as usize].contenido.clone(),
             Nodo::Dir(_) => Vec::new(),
         }
     }
 
-    fn attr(&self, ino: u64, n: &Nodo) -> FileAttr {
+    fn attr(&mut self, ino: u64, n: &Nodo) -> FileAttr {
         let (kind, perm, size, nlink) = match n {
             Nodo::Dir(_) => (FileType::Directory, 0o555, 0, 2),
             Nodo::Doc(j) => (FileType::RegularFile, 0o444, self.corpus.docs[*j as usize].contenido.len() as u64, 1),

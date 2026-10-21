@@ -9,6 +9,7 @@ license = "MIT"
 [dependencies]
 fuser = { version = "0.15", default-features = false }
 libc = "0.2"
+io-uring = "0.7"
 
 [dev-dependencies]
 proptest = "1"

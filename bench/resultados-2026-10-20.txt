@@ -1,0 +1,103 @@
+1000 documentos, 27 temas, fuente /usr/lib/python3.13 -> /tmp/poincare-bench-corpus/stdlib-1k
+10000 documentos, 27 temas, fuente /usr/lib/python3.13 -> /tmp/poincare-bench-corpus/sint-10k
+poincare-fs: 18 documentos, dim=16, E/S=Some(Uring), lectura=0.000s, embedding=0.258s, índice=escrito en /tmp/poincare-bench-corpus/c18.idx
+poincare-fs: 1000 documentos, dim=16, E/S=Some(Uring), lectura=0.007s, embedding=2.014s, índice=escrito en /tmp/poincare-bench-corpus/stdlib-1k.idx
+poincare-fs: 10000 documentos, dim=16, E/S=Some(Uring), lectura=0.081s, embedding=13.298s, índice=escrito en /tmp/poincare-bench-corpus/sint-10k.idx
+carga antes: 23.21 21.33 15.27 13/2010 960669
+## c18 cache=4096 repetición 1
+corpus=/tmp/poincare-bench-corpus/c18 pasos=2000 cache=4096 montaje=0.013s caminata=0.690s
+| operación | n | p50 (µs) | p99 (µs) | media (µs) | ops/s |
+|---|---:|---:|---:|---:|---:|
+| ls (vista nueva) | 2000 | 101.7 | 4899.0 | 217.6 | 4595 |
+| ls (repetido) | 2000 | 26.1 | 990.3 | 72.5 | 13788 |
+| cd | 1940 | 9.1 | 23.0 | 16.7 | 59780 |
+| cat | 2000 | 20.5 | 53.7 | 37.4 | 26758 |
+## c18 cache=4096 repetición 2
+corpus=/tmp/poincare-bench-corpus/c18 pasos=2000 cache=4096 montaje=0.020s caminata=0.959s
+| operación | n | p50 (µs) | p99 (µs) | media (µs) | ops/s |
+|---|---:|---:|---:|---:|---:|
+| ls (vista nueva) | 2000 | 110.1 | 5755.3 | 334.7 | 2988 |
+| ls (repetido) | 2000 | 26.3 | 1063.4 | 71.8 | 13919 |
+| cd | 1940 | 9.3 | 86.0 | 23.1 | 43260 |
+| cat | 2000 | 20.5 | 437.9 | 49.1 | 20381 |
+## c18 cache=4096 repetición 3
+corpus=/tmp/poincare-bench-corpus/c18 pasos=2000 cache=4096 montaje=0.011s caminata=0.625s
+| operación | n | p50 (µs) | p99 (µs) | media (µs) | ops/s |
+|---|---:|---:|---:|---:|---:|
+| ls (vista nueva) | 2000 | 103.2 | 4699.0 | 219.3 | 4561 |
+| ls (repetido) | 2000 | 26.4 | 63.9 | 42.0 | 23820 |
+| cd | 1940 | 8.9 | 21.0 | 16.7 | 60043 |
+| cat | 2000 | 20.4 | 39.3 | 33.7 | 29690 |
+## c18 cache=0 (sin LRU)
+corpus=/tmp/poincare-bench-corpus/c18 pasos=2000 cache=0 montaje=0.013s caminata=1.564s
+| operación | n | p50 (µs) | p99 (µs) | media (µs) | ops/s |
+|---|---:|---:|---:|---:|---:|
+| ls (vista nueva) | 2000 | 161.9 | 3879.2 | 252.3 | 3963 |
+| ls (repetido) | 2000 | 153.9 | 4690.0 | 273.3 | 3659 |
+| cd | 1940 | 71.0 | 155.1 | 80.8 | 12373 |
+| cat | 2000 | 83.8 | 3978.9 | 176.7 | 5661 |
+## stdlib-1k cache=4096 repetición 1
+corpus=/tmp/poincare-bench-corpus/stdlib-1k pasos=2000 cache=4096 montaje=0.021s caminata=4.391s
+| operación | n | p50 (µs) | p99 (µs) | media (µs) | ops/s |
+|---|---:|---:|---:|---:|---:|
+| ls (vista nueva) | 2000 | 1167.9 | 9304.6 | 1958.9 | 510 |
+| ls (repetido) | 2000 | 28.0 | 4025.3 | 140.8 | 7103 |
+| cd | 1940 | 10.2 | 93.9 | 33.1 | 30237 |
+| cat | 2000 | 24.5 | 561.4 | 61.5 | 16257 |
+## stdlib-1k cache=4096 repetición 2
+corpus=/tmp/poincare-bench-corpus/stdlib-1k pasos=2000 cache=4096 montaje=0.035s caminata=2.839s
+| operación | n | p50 (µs) | p99 (µs) | media (µs) | ops/s |
+|---|---:|---:|---:|---:|---:|
+| ls (vista nueva) | 2000 | 898.2 | 6885.4 | 1311.7 | 762 |
+| ls (repetido) | 2000 | 25.9 | 484.3 | 60.9 | 16430 |
+| cd | 1940 | 9.6 | 28.2 | 11.6 | 86233 |
+| cat | 2000 | 21.8 | 74.1 | 34.2 | 29265 |
+## stdlib-1k cache=4096 repetición 3
+corpus=/tmp/poincare-bench-corpus/stdlib-1k pasos=2000 cache=4096 montaje=0.023s caminata=2.898s
+| operación | n | p50 (µs) | p99 (µs) | media (µs) | ops/s |
+|---|---:|---:|---:|---:|---:|
+| ls (vista nueva) | 2000 | 940.0 | 7054.3 | 1335.4 | 749 |
+| ls (repetido) | 2000 | 27.1 | 120.7 | 47.5 | 21047 |
+| cd | 1940 | 11.3 | 75.6 | 26.4 | 37921 |
+| cat | 2000 | 24.0 | 108.7 | 38.6 | 25889 |
+## stdlib-1k cache=0 (sin LRU)
+corpus=/tmp/poincare-bench-corpus/stdlib-1k pasos=2000 cache=0 montaje=0.018s caminata=18.495s
+| operación | n | p50 (µs) | p99 (µs) | media (µs) | ops/s |
+|---|---:|---:|---:|---:|---:|
+| ls (vista nueva) | 2000 | 2058.1 | 11229.1 | 3136.1 | 319 |
+| ls (repetido) | 2000 | 1964.3 | 10502.7 | 3044.5 | 328 |
+| cd | 1940 | 770.3 | 4662.4 | 846.3 | 1182 |
+| cat | 2000 | 1006.1 | 9783.9 | 2242.9 | 446 |
+## sint-10k cache=4096 repetición 1
+corpus=/tmp/poincare-bench-corpus/sint-10k pasos=2000 cache=4096 montaje=0.130s caminata=13.923s
+| operación | n | p50 (µs) | p99 (µs) | media (µs) | ops/s |
+|---|---:|---:|---:|---:|---:|
+| ls (vista nueva) | 2000 | 6660.3 | 18959.5 | 6791.9 | 147 |
+| ls (repetido) | 2000 | 40.4 | 1872.8 | 81.4 | 12281 |
+| cd | 1940 | 13.1 | 52.0 | 26.9 | 37210 |
+| cat | 2000 | 37.8 | 247.0 | 58.7 | 17025 |
+## sint-10k cache=4096 repetición 2
+corpus=/tmp/poincare-bench-corpus/sint-10k pasos=2000 cache=4096 montaje=0.129s caminata=14.974s
+| operación | n | p50 (µs) | p99 (µs) | media (µs) | ops/s |
+|---|---:|---:|---:|---:|---:|
+| ls (vista nueva) | 2000 | 7067.9 | 23826.3 | 7296.4 | 137 |
+| ls (repetido) | 2000 | 41.8 | 1804.8 | 86.8 | 11526 |
+| cd | 1940 | 13.2 | 38.8 | 27.2 | 36796 |
+| cat | 2000 | 38.8 | 479.1 | 74.4 | 13432 |
+## sint-10k cache=4096 repetición 3
+corpus=/tmp/poincare-bench-corpus/sint-10k pasos=2000 cache=4096 montaje=0.232s caminata=18.995s
+| operación | n | p50 (µs) | p99 (µs) | media (µs) | ops/s |
+|---|---:|---:|---:|---:|---:|
+| ls (vista nueva) | 2000 | 8001.5 | 30088.6 | 9287.7 | 108 |
+| ls (repetido) | 2000 | 44.3 | 2903.7 | 120.2 | 8319 |
+| cd | 1940 | 13.7 | 104.5 | 22.5 | 44376 |
+| cat | 2000 | 40.8 | 483.3 | 64.2 | 15568 |
+## sint-10k cache=0 (sin LRU)
+corpus=/tmp/poincare-bench-corpus/sint-10k pasos=300 cache=0 montaje=0.191s caminata=16.060s
+| operación | n | p50 (µs) | p99 (µs) | media (µs) | ops/s |
+|---|---:|---:|---:|---:|---:|
+| ls (vista nueva) | 300 | 15304.9 | 48002.0 | 17143.6 | 58 |
+| ls (repetido) | 300 | 15808.8 | 45892.4 | 17799.6 | 56 |
+| cd | 291 | 7673.6 | 36094.7 | 8937.2 | 112 |
+| cat | 300 | 7954.3 | 32746.5 | 9911.4 | 101 |
+carga después: 20.58 20.61 15.58 22/1605 1021894
