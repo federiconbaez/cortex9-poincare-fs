@@ -96,6 +96,32 @@ pub fn tfidf(textos: &[&str]) -> Vec<Vec<f64>> {
         .collect()
 }
 
+/// IDF del corpus (misma fórmula que [`tfidf`]); sirve para vectorizar consultas.
+pub fn idf(textos: &[&str]) -> Vec<f64> {
+    let n = textos.len() as f64;
+    let mut df = vec![0.0; DIM];
+    for t in textos {
+        for (i, x) in tf(t).iter().enumerate() {
+            if *x != 0.0 {
+                df[i] += 1.0;
+            }
+        }
+    }
+    df.iter().map(|d| ((1.0 + n) / (1.0 + d)).ln() + 1.0).collect()
+}
+
+/// Vector TF-IDF normalizado de un texto cualquiera (p. ej. una consulta) con el IDF de un corpus.
+/// Para un documento del corpus da exactamente la fila de [`tfidf`].
+pub fn vectorizar(texto: &str, idf: &[f64]) -> Vec<f64> {
+    let mut w: Vec<f64> = tf(texto)
+        .iter()
+        .zip(idf)
+        .map(|(x, i)| if *x == 0.0 { 0.0 } else { x.signum() * (1.0 + x.abs().ln()) * i })
+        .collect();
+    normalizar(&mut w);
+    w
+}
+
 /// Componente principal por iteración de potencia, ortogonal a `previas`.
 fn componente(x: &[Vec<f64>], previas: &[Vec<f64>]) -> Vec<f64> {
     // vector inicial fijo, no aleatorio
@@ -197,6 +223,16 @@ mod tests {
         assert!(puntos(&[]).is_empty());
         assert_eq!(puntos(&["solo uno"]), vec![C::CERO]);
         assert_eq!(puntos(&["igual", "igual"]), vec![C::CERO, C::CERO]);
+    }
+
+    #[test]
+    fn vectorizar_coincide_con_tfidf() {
+        let t = ["el gato duerme", "kernel linux ebpf", "receta de pan", "gato y perro", ""];
+        let m = tfidf(&t);
+        let i = idf(&t);
+        for (k, x) in t.iter().enumerate() {
+            assert_eq!(vectorizar(x, &i), m[k]);
+        }
     }
 
     #[test]

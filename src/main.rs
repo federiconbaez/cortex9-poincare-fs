@@ -8,6 +8,8 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::{Duration, Instant};
 
+mod valor;
+
 const USO: &str = "uso:
   poincare-fs montar <corpus> <punto> [opciones]   monta (termina con `fusermount3 -u <punto>`)
   poincare-fs vista <corpus> [doc1 doc2 ...]       la vista tras `cd doc1/doc2/...`, sin FUSE
@@ -17,6 +19,7 @@ const USO: &str = "uso:
   poincare-fs es-info <corpus>                     lee el corpus e informa el modo de E/S usado
   poincare-fs generar <stdlib|sintetico> <n> <dir> [--python DIR] [--semilla S]
   poincare-fs bench <corpus> [--pasos N] [--cache N] [--indice F] [--semilla S]
+  poincare-fs valor <corpus> [--consultas F.tsv] [--reps N] [--semillas N] [--tsv salida.tsv] [--exportar DIR]
 opciones: --k N  --radio R  --memoria G  --dim D  --epocas E  --indice F  --cache N
 E/S: POINCARE_IO=auto|uring|pread";
 
@@ -346,6 +349,14 @@ fn run() -> Result<(), String> {
             println!("{} documentos, {} temas, fuente {} -> {}", docs.len(), temas.len(), py.display(), dir.display());
         }
         "bench" => bench(&a)?,
+        "valor" => valor::correr(
+            Path::new(a.pos(1)?),
+            a.flags.get("consultas").map(Path::new),
+            a.num("reps", 5)?,
+            a.num("semillas", 200)?,
+            a.flags.get("tsv").map(Path::new),
+            a.flags.get("exportar").map(Path::new),
+        )?,
         _ => return Err(USO.into()),
     }
     Ok(())

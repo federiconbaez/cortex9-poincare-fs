@@ -64,6 +64,7 @@ $B generar stdlib 1000 /tmp/c1k      # texto real: docstrings y comentarios del 
 $B generar sintetico 10000 /tmp/c10k # 10 000 docs muestreados del vocabulario de cada paquete
 $B indexar /tmp/c10k /tmp/c10k.idx   # guarda el embedding (se valida con una huella)
 sh bench/correr.sh                   # benchmark completo (ver abajo)
+sh bench/valor.sh                    # experimento de valor vs ripgrep / TF-IDF / FAISS (ver VALOR.md)
 ```
 
 ## Resultados medidos (20/10/2026, computadora compartida: kernel 6.12, 8 núcleos, Rust 1.85.1)
@@ -160,6 +161,12 @@ Qué muestran los números:
 - Calcular el embedding (vecinos O(n²) + SGD): 0,19 s con 18 docs, 1,5 s con 1000 y 13,2 s con 10 000. Con `--indice` se calcula una sola vez; montar después tarda 0,13 s.
 
 ## Qué NO está verificado
+
+* **Valor contra líneas base: medido y NO demostrado** ([VALOR.md](VALOR.md)). Para encontrar un documento relevante en el stdlib de 1000 documentos, el FS montado:
+  - en «más como este» acierta 31,5 % contra 84,0 % de FAISS y TF‑IDF planos y 48,5 % de ripgrep, y tarda 7,5× FAISS;
+  - con consultas escritas, un agente que solo navega el FS acierta 22,2 % contra 88,9 % y 77,8 %.
+
+  El motivo es que no se puede hacer `cd` a un documento fuera de la vista. Con γ = 0, 349 de 1000 documentos no se alcanzan por ningún camino, y con γ = 0,5 la navegación con oráculo llegó a 73 de 200. La geometría sola, consultada directamente (algo que el FS no ofrece), empata con TF‑IDF (85 contra 84 %), pero queda en 0,73× FAISS, por encima del umbral de 0,70×.
 
 * **FUSE‑over‑io_uring**: no se usa ni se probó, porque el kernel 6.12 no lo trae. io_uring se usa solo para leer el almacén (corpus e índice) al montar, y en esta máquina no fue más rápido que `pread` (0,052 s contra 0,027 s con 10 000 archivos).
 * **`cat` no lee del disco en el momento.** El corpus se precarga completo en memoria al montar (por io_uring). No hay lectura bajo demanda ni prefetch incremental, y los cambios en el corpus no se ven hasta volver a montar.

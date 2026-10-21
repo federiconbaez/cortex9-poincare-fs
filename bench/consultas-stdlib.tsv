@@ -1,0 +1,55 @@
+# tema	tipo	consulta   (escritas a mano ANTES de correr ninguna medición; tipo K = palabras clave, D = frase descriptiva)
+email	K	mime message header
+email	D	parse the headers of an email message and its mime parts
+asyncio	K	event loop coroutine
+asyncio	D	schedule a callback to run later on the event loop
+tkinter	K	widget canvas button
+tkinter	D	create a window with a button widget and handle clicks
+importlib	K	module loader finder
+importlib	D	how a module spec is found and loaded by the import system
+xml	K	element tree dom
+xml	D	parse an xml document into elements and attributes
+logging	K	logger handler formatter
+logging	D	send log records to a file handler with a formatter
+http	K	cookie server request
+http	D	an http server handling requests and setting cookies
+unittest	K	test case assert mock
+unittest	D	write a test case and assert that a mock was called
+multiprocessing	K	process pool pickle
+multiprocessing	D	share data between worker processes using a pool
+urllib	K	url parse quote
+urllib	D	split a url into scheme netloc and query and quote special characters
+xmlrpc	K	xmlrpc marshal fault
+xmlrpc	D	call remote procedures over xml rpc and handle faults
+concurrent	K	executor future
+concurrent	D	submit work to a thread pool executor and wait for the futures
+zipfile	K	zip archive compression
+zipfile	D	read and write members of a zip archive with compression
+wsgiref	K	wsgi application environ
+wsgiref	D	a simple wsgi server that calls the application with environ and start_response
+pathlib	K	path glob suffix
+pathlib	D	join path components and match files with glob patterns
+re	K	regular expression pattern
+re	D	compile a regular expression pattern and match groups
+json	K	json encoder decode
+json	D	serialize python objects to json and decode them back
+html	K	html entity parser
+html	D	parse html tags and unescape character references
+ctypes	K	ctypes structure pointer
+ctypes	D	call a function in a shared c library with pointers and structures
+collections	K	ordereddict namedtuple deque
+collections	D	a dictionary subclass that remembers insertion order
+zoneinfo	K	time zone tzinfo
+zoneinfo	D	convert datetimes between time zones using the iana database
+sysconfig	K	installation scheme paths
+sysconfig	D	find the installation paths and configuration variables of python
+dbm	K	dbm database key
+dbm	D	a persistent key value database stored on disk
+venv	K	virtual environment
+venv	D	create an isolated virtual environment with its own site packages
+tomllib	K	toml parse
+tomllib	D	parse a toml configuration file into a dictionary
+sqlite3	K	sqlite connection cursor
+sqlite3	D	execute sql statements on a sqlite database connection
+curses	K	curses terminal window
+curses	D	draw text on the terminal screen with curses windows
