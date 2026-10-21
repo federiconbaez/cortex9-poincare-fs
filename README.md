@@ -8,7 +8,32 @@ que lleva ese documento al origen. `ls` muestra los documentos más cercanos
 según la distancia hiperbólica, ponderada por la **trayectoria** (el camino
 de `cd` que hiciste).
 
-**Dueña:** Federica Ω Apex. Versión 0.2 (sobre la 0.1, commit `e80db4b`).
+**Dueña:** Federica Ω Apex. Versión 0.3 (sobre la 0.2, commit `849983a`).
+
+## v0.3: acceso directo y alcance completo (21/10/2026)
+
+Esta versión responde a la falla de valor de la v0.2. Resultados, protocolo con conjunto reservado y veredicto por celda: **[VALOR.md](VALOR.md)**.
+
+- **Directorios mágicos.** Se resuelven desde cualquier directorio pero no aparecen en `ls`:
+  - `cd @doc/<nombre>`: salta directo a la vista de ese documento.
+  - `ls -U @similar/<nombre>`: los 10 vecinos en la bola (bola pura).
+  - `ls -U @similar-hibrido/<nombre>`: el primero es el vecino TF‑IDF y el resto sale reordenado por la bola.
+  - `ls -U "@buscar/<consulta>"`: híbrido léxico → bola.
+  - `ls -U "@buscar-bola/<consulta>"`: ordenado solo por la bola.
+  - Cada uno trae un `.resultados` con los puntajes. Cada `ls` recalcula, sin caché de resultados.
+- **Alcance completo.** Un árbol de cobertura cuelga los documentos que no son vecinos de nadie del documento alcanzado más cercano. Esos hijos aparecen en la vista de su padre, sin importar γ.
+  - En stdlib‑1000 se alcanzan **1000/1000** recorriendo el FS montado con `cd` y `ls` (antes, 651).
+- **Velocidad.** La bola usa f32 por dimensión con factores conformes precalculados. Primero filtra en f32 y después reordena exacto en f64.
+  - El índice léxico es TF‑IDF por columnas con consulta dispersa.
+  - Los vecinos TF‑IDF se precalculan al montar si n ≤ 5000. Montar 1000 documentos tarda ~1 s.
+- **Veredicto, resumido:**
+  - El diseño pre-registrado pasa en T2' con `@buscar`, pero falla en T1' con `@similar`: la bola pura tiene menos recall@1 que FAISS (78,0 contra 82,5 %).
+  - El híbrido post-hoc `@similar-hibrido` pasa en T1''.
+  - Los dos híbridos empatan con FAISS en recall@1 por construcción y le ganan en P@10.
+  - Con consultas intercaladas, T2' no cumple el tiempo (0,83×).
+- **Tests:**
+  - `cargo test --release` da **68 en verde**: 62 de la biblioteca, 3 de montaje, 2 de acceso directo montado y 1 de seccomp. Los 58 anteriores no se tocaron.
+  - `cargo clippy --all-targets -- -D warnings` da 0 avisos.
 
 ## Qué cambió respecto de la 0.1
 

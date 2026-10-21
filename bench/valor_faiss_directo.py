@@ -2,13 +2,16 @@
 MISMOS vectores TF-IDF 1024d exportados por `poincare-fs valor-directo`. Misma forma
 de medir que bench/valor_faiss.py: una consulta por llamada, sin vectorizar la consulta.
 Uso: python bench/valor_faiss_directo.py DIR [reps]"""
-import sys, time
+import os, subprocess, sys, time
 import numpy as np
 import faiss
 
 d = sys.argv[1]
 reps = int(sys.argv[2]) if len(sys.argv) > 2 else 5
 faiss.omp_set_num_threads(1)
+# PFS_INTERCALAR=1: un rg SIN medir entre consultas (igual que el arnés de Rust)
+INTERCALAR = os.environ.get("PFS_INTERCALAR") == "1"
+CORPUS = os.environ.get("PFS_CORPUS", "/tmp/pfs-valor/c1k")
 X = np.fromfile(f"{d}/docs.f32", dtype="<f4").reshape(-1, 1024)
 temas = open(f"{d}/temas.txt").read().split()
 tam = {t: temas.count(t) for t in set(temas)}
@@ -30,6 +33,8 @@ def correr(conj, consultas, excluir):
             _, I = idx.search(qv, 11 if excluir else 10)
             dt = time.perf_counter() - t0
             (frio if rep == 0 else ts).append(dt)
+            if INTERCALAR:
+                subprocess.run(["rg", "--no-config", "--count-matches", "-i", "-F", "-e", "the", CORPUS], capture_output=True)
             lista = [i for i in I[0] if i != s][:10]
             if rep == 0:
                 ok += temas[lista[0]] == t

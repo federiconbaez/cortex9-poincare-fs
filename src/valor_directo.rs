@@ -179,6 +179,17 @@ pub fn correr(original: &Path, consultas: &Path, heldout: &Path, reps: usize, sa
             a.t.push(dt);
         }
     };
+    // PFS_INTERCALAR=1: después de cada consulta medida (salvo rg) corre un `rg` SIN medir, para
+    // ver cuánto cambian los tiempos cuando la consulta no llega en un bucle caliente.
+    let intercalar = std::env::var("PFS_INTERCALAR").is_ok_and(|v| v == "1");
+    let molestar = |anon: &Path| {
+        if intercalar {
+            let _ = std::process::Command::new("rg").args(["--no-config", "--count-matches", "-i", "-F", "-e", "the"]).arg(anon).output();
+        }
+    };
+    if intercalar {
+        println!("modo INTERCALADO: un rg sin medir entre consultas");
+    }
     let nombres_de = |v: &[(u32, f64)]| -> Vec<String> { v.iter().map(|x| c.docs[x.0 as usize].nombre.clone()).collect() };
 
     println!("corpus: {} ({n} docs, {} temas), anonimizado en {}", original.display(), tam.len(), anon.display());
@@ -260,6 +271,9 @@ pub fn correr(original: &Path, consultas: &Path, heldout: &Path, reps: usize, sa
                     let dt = t0.elapsed().as_secs_f64();
                     l.retain(|x| *x != id);
                     anotar(&mut tsv, conj, met, &id, rep, &t, &l, true, dt);
+                    if met != "rg" {
+                        molestar(&anon);
+                    }
                 }
             }
         }
@@ -286,6 +300,9 @@ pub fn correr(original: &Path, consultas: &Path, heldout: &Path, reps: usize, sa
                     };
                     let dt = t0.elapsed().as_secs_f64();
                     anotar(&mut tsv, conj, met, &id, rep, t, &l, false, dt);
+                    if met != "rg" {
+                        molestar(&anon);
+                    }
                 }
             }
         }

@@ -1,5 +1,169 @@
 # VALOR de poincare-fs contra líneas base simples
 
+## v0.3: re-intento con acceso directo (21/10/2026)
+
+**Respuesta corta: pasa con condiciones, y no por la geometría sola.**
+
+- **Lo pre-registrado:**
+  - En T2', `@buscar` (híbrido léxico → bola) **pasa** las cuatro celdas en bucle caliente.
+  - En T1', `@similar` (bola pura) **falla** el recall@1 contra FAISS: 78,0 % contra 82,5 %.
+  - Por lo tanto, el diseño pre-registrado **no pasa completo**.
+- **Lo post-hoc:**
+  - `@similar-hibrido` se diseñó después de ver un agregado de T1' (ver «Desvío»).
+  - Sobre un segundo conjunto reservado, T1'', **pasa** las cuatro celdas.
+  - En el híbrido, el recall@1 **empata** con FAISS por construcción: el primer resultado es el vecino TF‑IDF. La bola solo reordena las posiciones 2–10, y ahí mejora la P@10.
+- **El tiempo:** pasa en bucle caliente, con las dos corridas entre 0,27× y 0,48× FAISS. Con consultas intercaladas por otro trabajo (una corrida), T2' **falla** el tiempo (0,83×) y T1 queda justo (0,60–0,62×).
+
+### Protocolo y conjunto reservado (condición de Research)
+
+- `e45e51e` (21/10 00:19, hora de Buenos Aires, UTC−3) fija T1' y T2' **antes** de re-medir o ajustar:
+  - script determinista: [`bench/heldout/generar_heldout.py`](bench/heldout/generar_heldout.py);
+  - T1': 200 semillas con la semilla 20261021, disjuntas de las de T1;
+  - T2': 54 consultas automáticas con la semilla 20261022, 27 K de términos de IDF alto y 27 S de tramos de 3 a 8 palabras;
+  - más el pre-registro del diseño.
+
+  sha256 completos en [`MANIFEST.txt`](bench/heldout/MANIFEST.txt):
+  - `generar_heldout.py`: `60e6654bdd379693151b1ce38b9415ed6c1fb35d530783dd9f6762d82f12f9be`
+  - `t1p-semillas.tsv`: `9b14c0ae97341da68b1febcd15e0a8571485f4733b6655e596d45d6df72cf04d`
+  - `t2p-consultas.tsv`: `811ed794a03bf1aa5a7d14575ee848382176f7c3a493d20b045660a601e7445e`
+- `e483cfb` (00:30) fija **T1''**: 200 semillas con la semilla 20261023, disjuntas de T1 s7/s11/s23 y de T1'. Lo hace antes de medir el diseño post-hoc `@similar-hibrido`. Ver [`ADENDA-T1pp.md`](bench/heldout/ADENDA-T1pp.md).
+- `7196986` (00:32) es el código medido. Las corridas 1 y 2 son de las 00:32–00:34, y la intercalada de las 00:43–00:56.
+- **Desvío declarado:**
+  - Una corrida de prueba midió T1' y T2' sin querer, porque el filtro «solo referencia» no estaba compilado.
+  - Se vieron **solo agregados**. Su TSV queda en `bench/heldout/desvio-corrida-accidental.tsv`, sha256 `7738c350d595568b7fb2c7055b58b14f07756df0024cb41423b13c4d0880c106`.
+  - Después no se tocó el ranking pre-registrado, solo la velocidad: el TTL de las entradas mágicas y vectorizar sin reservar memoria, que da el mismo resultado bit a bit.
+  - El diseño nuevo de T1 se juzga en T1'', no en T1'.
+
+### Qué cambió en el FS
+
+Todo está en la interfaz FUSE real, no en una API aparte ([`src/directo.rs`](src/directo.rs), [`src/fs.rs`](src/fs.rs)).
+
+| ruta | qué hace |
+|---|---|
+| `cd @doc/<nombre>` | salta a la vista de cualquier documento en una operación |
+| `ls -U @similar/<nombre>` | los 10 vecinos hiperbólicos (**bola pura**) |
+| `ls -U @similar-hibrido/<nombre>` | 1.º el vecino TF‑IDF más cercano; 2.º–10.º los 50 vecinos TF‑IDF ordenados por distancia hiperbólica a la semilla (**híbrido**) |
+| `ls -U "@buscar/<consulta>"` | 1.º el mejor TF‑IDF; 2.º–10.º los 50 mejores TF‑IDF ordenados por distancia hiperbólica al 1.º (**híbrido**) |
+| `ls -U "@buscar-bola/<consulta>"` | orden **solo por la bola**, desde el punto medio de Einstein de los 5 mejores léxicos. El léxico solo ubica el punto, porque no hay codificador de texto a la bola. |
+| `…/.resultados` | ranking con puntajes |
+
+- **Directorios mágicos:**
+  - Se resuelven con `lookup` desde cualquier directorio, pero **no se listan**. Así el listado normal no cambia y los 58 tests viejos siguen iguales.
+  - Los nombres de documento que empiezan con `@` se rechazan.
+  - Cada `ls` llega al proceso y **recalcula**: no hay caché de resultados ni `FOPEN_CACHE_DIR`.
+  - Se probó `FUSE_NO_OPENDIR_SUPPORT`: con eso el kernel cachea el listado, el `ls` repetido baja a 3,7 µs y no recalcula. **Se descartó** por deshonesto para medir.
+  - Las entradas mágicas tienen TTL de 1 h, porque son inmutables.
+- **Bola:** coordenadas f32 por dimensión (SoA), con `a_i = 1/(1−|x_i|²)` precalculado. Como `cosh d = 1 + 2|q−x|² a_q a_x`, el prefiltro f32 es exacto en orden. Se toman k+16 candidatos y se reordenan en f64 con la distancia hiperbólica exacta. Un test lo compara contra fuerza bruta.
+  - Tarda **~8 µs** en proceso, contra ~130 µs de FAISS sobre TF‑IDF de 1024 dimensiones.
+- **Léxico:** los mismos TF‑IDF que FAISS, guardados por columnas en f32. La consulta es dispersa, así que se recorren solo las dimensiones no nulas, unos 10 µs incluyendo vectorizar.
+  - En `@similar-hibrido` los 50 vecinos TF‑IDF de cada documento se **precalculan al montar** (n ≤ 5000). El montaje completo tarda ~1,0 s, con índices y cobertura.
+- **Cobertura (alcance completo):**
+  - Hay un árbol de alcance: BFS desde `/` por el grafo de k vecinos con γ = 0. Los 349 documentos que no son vecinos de nadie se cuelgan, estilo Prim, del documento alcanzado más cercano, con profundidad ≤ 63.
+  - La vista de cualquier ruta cuyo foco sea el padre incluye al hijo si no estaba entre los k. En `.vista` aparece aparte, como `# cobertura`.
+  - En el corpus de 1000 documentos hay como máximo 43 entradas extra en una vista `/<doc>`.
+
+### Alcance (corpus de 1000 documentos, en las tres corridas)
+
+- Árbol: **1000/1000**, con 349 colgados por cobertura y profundidad máxima 22.
+- Con γ = 0, por cualquier camino: **1000/1000**. Antes era 651/1000.
+- **Verificado montado con γ = 0,5** (por defecto): recorriendo el árbol con `cd` y `ls` reales aparecen **1000/1000**, con 4 `ls` de mediana y 22 como máximo.
+- Además, `cd @doc/<x>` llega a cualquiera en una operación.
+
+### Resultados: bucle caliente, misma forma de medir que FAISS
+
+Cada método corre en su propio bucle: 5 repeticiones, la 1.ª es la «fría» y las 4 siguientes las «calientes». Hubo dos corridas completas, con load average de 4 a 5,3 ([`bench/valor3-corrida1.txt`](bench/valor3-corrida1.txt), [`corrida2`](bench/valor3-corrida2.txt), TSV por consulta al lado).
+
+- **Los aciertos fueron idénticos en las dos corridas.**
+- Los tiempos son medianas calientes en ms, como «corrida 1 / corrida 2».
+- En el FS el tiempo es el `read_dir` completo (lookup + opendir + readdir×2 + releasedir) con el cálculo incluido. En T2 incluye además vectorizar la consulta; **FAISS no la incluye**, igual que antes.
+
+#### Conjuntos reservados (sobre estos se da el veredicto)
+
+| conjunto | método | recall@1 | P@10 | p50 (ms) | p99 (ms) |
+|---|---|---:|---:|---:|---:|
+| T1' | FS `@similar` (bola pura, pre-registrado) | 78,0 % | 0,677 | 0,043 / 0,043 | 0,107 / 0,068 |
+| T1' | FS `@similar-hibrido` (post-hoc, solo referencia) | 82,5 % | 0,689 | 0,043 / 0,040 | 0,067 / 0,061 |
+| T1' | FAISS IndexFlatIP | 82,5 % | 0,608 | 0,128 / 0,138 | 0,161 / 0,165 |
+| T1' | ripgrep | 50,0 % | 0,392 | 6,52 / 6,45 | 8,61 / 8,94 |
+| T1'' | FS `@similar-hibrido` (post-hoc) | 81,5 % | 0,652 | 0,037 / 0,037 | 0,058 / 0,051 |
+| T1'' | FS `@similar` (bola pura) | 78,0 % | 0,637 | 0,043 / 0,042 | 0,055 / 0,101 |
+| T1'' | FAISS IndexFlatIP | 81,5 % | 0,582 | 0,127 / 0,139 | 0,155 / 0,193 |
+| T1'' | ripgrep | 50,5 % | 0,366 | 6,58 / 6,56 | 9,11 / 9,41 |
+| T2' | FS `@buscar` (híbrido, pre-registrado) | 79,6 % | 0,357 | 0,051 / 0,069 | 0,114 / 0,135 |
+| T2' | FS `@buscar-bola` (bola pura) | **13,0 %** | 0,245 | 0,055 / 0,076 | 0,118 / 0,101 |
+| T2' | FAISS IndexFlatIP | 79,6 % | 0,337 | 0,134 / 0,144 | 0,160 / 0,182 |
+| T2' | ripgrep | 68,5 % | 0,340 | 6,66 / 6,79 | 9,85 / 8,95 |
+
+#### Referencia (T1 con 3 semillas de muestreo; T2 con las 54 consultas a mano)
+
+| conjunto | `@similar` (bola) | `@similar-hibrido` | FAISS | rg | p50 FS bola / híbrido / FAISS (ms) |
+|---|---|---|---|---|---|
+| T1 s7 | 85,0 % · P@10 0,722 | 84,0 % · 0,706 | 84,0 % · 0,629 | 48,5 % | 0,047 / 0,038 / 0,131–0,135 |
+| T1 s11 | 81,5 % · 0,697 | 88,0 % · 0,705 | 88,0 % · 0,615 | 50,0 % | 0,045–0,048 / 0,038–0,041 / 0,129–0,138 |
+| T1 s23 | 82,0 % · 0,691 | 81,0 % · 0,686 | 81,0 % · 0,602 | 51,0 % | 0,043–0,046 / 0,039–0,043 / 0,130–0,137 |
+
+- Con la bola pura, T1 da entre 81,5 y 85,0 % según la semilla; FAISS da entre 81,0 y 88,0 %. **Gana en 2 de 3 semillas y pierde en s11.** El empate de la v0.2 (85 contra 84) era la semilla favorable.
+- En T2: `@buscar` 88,9 % · P@10 0,666 · 0,053–0,058 ms; `@buscar-bola` 46,3 % · 0,481; FAISS 88,9 % · 0,667 · 0,136–0,138 ms; rg 77,8 % · 0,588.
+
+### Veredicto por celda (conjuntos reservados, mediana caliente, corridas 1 / 2)
+
+| caso | t / rg | t / FAISS | recall@1 contra rg | recall@1 contra FAISS | ¿pasa? |
+|---|---|---|---|---|---|
+| **T1'**, `@similar` bola pura (pre-registrado) | 0,007 / 0,007 ✔ | 0,34 / 0,31 ✔ | 78,0 ≥ 50,0 ✔ | **78,0 < 82,5 ✘** | **NO** |
+| **T2'**, `@buscar` híbrido (pre-registrado) | 0,008 / 0,010 ✔ | 0,38 / 0,48 ✔ | 79,6 ≥ 68,5 ✔ | 79,6 = 79,6 ✔ (empate) | **SÍ** |
+| T2', `@buscar-bola` bola pura | ✔ | 0,41 / 0,52 ✔ | 13,0 < 68,5 ✘ | 13,0 < 79,6 ✘ | NO |
+| **T1''**, `@similar-hibrido` (post-hoc) | 0,006 / 0,006 ✔ | 0,29 / 0,27 ✔ | 81,5 ≥ 50,5 ✔ | 81,5 = 81,5 ✔ (empate) | **SÍ** |
+
+**Intercalado** (1 corrida, [`bench/valor3-intercalado.txt`](bench/valor3-intercalado.txt)): entre cada consulta medida se corre un `rg` sin medir, y se hace igual con FAISS. Las cachés se enfrían y el hilo de FUSE tiene que despertar. Un primer intento de esta corrida se descartó porque un `find /` lanzado por error recorrió el punto de montaje y ocupó el proceso del FS. El código del modo intercalado (`PFS_INTERCALAR`) entró en el commit de documentación, después de `7196986`; solo cambia el arnés.
+
+| conjunto | método | p50 FS (ms) | p50 FAISS (ms) | t / FAISS | p99 FS / FAISS (ms) |
+|---|---|---:|---:|---:|---:|
+| T1' | `@similar` | 0,113 | 0,181 | 0,62 ✔ | 0,75 / 0,26 |
+| T1'' | `@similar-hibrido` | 0,106 | 0,177 | 0,60 ✔ | 0,82 / 0,29 |
+| T2' | `@buscar` | 0,141 | 0,170 | **0,83 ✘** | 0,99 / 0,24 |
+
+### Lectura honesta
+
+- **Lo que se arregló:**
+  - El alcance: de 651 a 1000/1000, probado montado.
+  - La interfaz: una operación en vez de 33 acciones.
+  - La velocidad: el camino FUSE completo queda en 0,27–0,48× FAISS en caliente.
+- **Lo que no:** la bola sola **no** iguala a FAISS en recall@1 sobre datos nuevos:
+  - T1': 78,0 contra 82,5;
+  - T1'': 78,0 contra 81,5;
+  - T1 s11: 81,5 contra 88.
+  
+  Para palabras clave, la bola sola es inútil: 13 % en T2'.
+- **Qué aporta la bola en los híbridos:** el primer resultado es el de TF‑IDF, así que el recall@1 empata **por construcción**. La bola aporta la P@10: 0,652 contra 0,582 en T1'', 0,689 contra 0,608 en T1' y 0,357 contra 0,337 en T2'.
+- **De dónde sale la ventaja de tiempo:** no es de «la geometría hiperbólica» en sí. Sale de:
+  - 16 dimensiones contra 1024;
+  - la consulta léxica dispersa;
+  - en `@similar-hibrido`, el precálculo al montar de los vecinos TF‑IDF, que FAISS plano no hace. Un FAISS con vecinos precalculados también sería casi instantáneo.
+- **Bajo carga intercalada:** el p99 del FS (0,75–0,99 ms) es 3 a 4 veces el de FAISS, y en T2' la mediana no cumple 0,70×.
+
+### Qué falta
+
+- Repetir la corrida intercalada (hubo una sola) y medir en una máquina quieta o en `host-de-pruebas`.
+- Bajar el costo en frío de T2:
+  - el índice léxico ocupa 4 MB en f32; con listas invertidas o int8 cabría en caché;
+  - la latencia de despertar el hilo de FUSE.
+- Un codificador de consultas a la bola, que evite el ancla léxica. Sin eso, la bola pura no sirve para palabras clave.
+- Corpus más grandes (10k) y documentos reales del usuario. El precálculo léxico se desactiva con n > 5000 y no se midió.
+- Tiempo de una persona usando `@buscar` y `@similar`.
+
+## Cómo reproducir (v0.3)
+
+```sh
+sh bench/valor3.sh 1          # bucle caliente -> bench/valor3-corrida1.{txt,tsv}
+PFS_INTERCALAR=1 ./target/release/poincare-fs valor-directo /tmp/pfs-valor/c1k --exportar /tmp/pfs-valor/exp3-i --tsv bench/valor3-intercalado.tsv
+PFS_INTERCALAR=1 /tmp/pfs-faiss-venv/bin/python bench/valor_faiss_directo.py /tmp/pfs-valor/exp3-i 5
+python3 bench/heldout/generar_heldout.py /tmp/pfs-valor/c1k /tmp/x   # mismos sha256 que MANIFEST.txt
+```
+
+---
+
+# v0.2 (histórico, commit `849983a`; auditado en `20cc898`: FALLA)
+
 **Pregunta:** ¿poincare-fs ayuda a *encontrar* un documento relevante más rápido o mejor que herramientas simples (ripgrep, un índice vectorial plano)? No se mide si monta (eso está en [VERIFICACION.md](VERIFICACION.md)), sino si aporta valor.
 
 **Respuesta corta: no.** En esta tarea poincare-fs, usado como sistema de archivos, **pierde** contra FAISS plano y contra TF‑IDF plano en tiempo y en aciertos. Contra ripgrep es más rápido, pero acierta menos. El umbral que fijó Research **no se cumple**. Lo único que muestra algo bueno es el embedding de 16 dimensiones de la bola, consultado directamente y sin pasar por el FS. Para «más como este» empata en aciertos con TF‑IDF/FAISS (85,0 % contra 84,0 %), con mejor P@10 (0,722 contra 0,629). Pero el FS no ofrece ese acceso directo, y aun así queda en 0,73× FAISS, por encima del 0,70× que pide el umbral.
