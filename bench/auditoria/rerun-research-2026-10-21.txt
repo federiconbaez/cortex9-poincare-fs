@@ -1,0 +1,81 @@
+## fecha 2026-10-21T03:08:48+00:00
+corpus: corpus (18 docs, 6 temas), anonimizado en /tmp/pfs-valor-1195003/anon
+carga: 7.20 8.77 7.58 7/1530 1195013
+costo de preparación: embedding en proceso 0.107 s (lectura + TF-IDF + vecinos + RSGD); índice TF-IDF plano 0.001 s; rg: sin índice
+exportado para FAISS en /tmp/pfs-audit/exp-c18
+montaje T1: 0.100 s
+navegación hasta la semilla (oráculo): no llegó en 0/18; acciones ls+cd p50 3 p99 5 máx 5
+alcance (en proceso, misma navegación con oráculo): γ=0.5 (por defecto) 18/18 semillas; γ=0 18/18
+alcance γ=0 por CUALQUIER camino (BFS en el grafo de k=10 vecinos): 18/18 documentos
+
+### T1 «más como este» (18 semillas, 5 repeticiones; éxito y P@10 de la primera repetición)
+
+| tarea | método | n | éxito@1 | P@10 | p50 (ms) | p99 (ms) | acciones |
+|---|---|---:|---:|---:|---:|---:|---:|
+| T1 | poincare-fs montado: navegar hasta la semilla + ls, frío | 18 | 77.8 % (14/18) | 1.000 | 0.206 | 0.381 | 3.9 |
+| T1 | poincare-fs montado: navegar hasta la semilla + ls, caliente (LRU) | 18 | 77.8 % (14/18) | 1.000 | 0.139 | 0.624 | 3.9 |
+| T1 | bola 16d sin FUSE, γ=0, acceso directo (no existe en el FS) | 18 | 83.3 % (15/18) | 0.972 | 0.014 | 0.018 | 0.0 |
+| T1 | TF-IDF plano 1024d (coseno) | 18 | 88.9 % (16/18) | 1.000 | 0.013 | 0.026 | 0.0 |
+| T1 | ripgrep, 3 palabras clave de la semilla | 18 | 50.0 % (9/18) | 0.444 | 4.668 | 9.561 | 1.0 |
+faiss 1.15.1: índice IndexFlatIP con 18 vectores en 0.154 ms (1 hilo)
+| tarea | método | n | éxito@1 | P@10 | p50 (ms) | p99 (ms) | acciones |
+|---|---|---:|---:|---:|---:|---:|---:|
+| T1 | FAISS IndexFlatIP (TF-IDF 1024d) | 18 | 88.9 % (16/18) | 1.000 | 0.005 | 0.019 | 0.0 |
+corpus: /tmp/pfs-audit/c1k (1000 docs, 27 temas), anonimizado en /tmp/pfs-valor-1195878/anon
+carga: 7.18 8.75 7.57 7/1531 1195890
+costo de preparación: embedding en proceso 0.893 s (lectura + TF-IDF + vecinos + RSGD); índice TF-IDF plano 0.140 s; rg: sin índice
+exportado para FAISS en /tmp/pfs-audit/exp-1k
+montaje T1: 0.917 s
+navegación hasta la semilla (oráculo): no llegó en 127/200; acciones ls+cd p50 33 p99 79 máx 79
+alcance (en proceso, misma navegación con oráculo): γ=0.5 (por defecto) 73/200 semillas; γ=0 83/200
+alcance γ=0 por CUALQUIER camino (BFS en el grafo de k=10 vecinos): 651/1000 documentos
+
+### T1 «más como este» (200 semillas, 5 repeticiones; éxito y P@10 de la primera repetición)
+
+| tarea | método | n | éxito@1 | P@10 | p50 (ms) | p99 (ms) | acciones |
+|---|---|---:|---:|---:|---:|---:|---:|
+| T1 | poincare-fs montado: navegar hasta la semilla + ls, frío | 200 | 31.5 % (63/200) | 0.301 | 1.947 | 48.556 | 34.1 |
+| T1 | poincare-fs montado: navegar hasta la semilla + ls, caliente (LRU) | 200 | 31.5 % (63/200) | 0.301 | 0.971 | 5.457 | 34.1 |
+| T1 | bola 16d sin FUSE, γ=0, acceso directo (no existe en el FS) | 200 | 85.0 % (170/200) | 0.722 | 0.106 | 0.182 | 0.0 |
+| T1 | TF-IDF plano 1024d (coseno) | 200 | 84.0 % (168/200) | 0.629 | 0.710 | 1.251 | 0.0 |
+| T1 | ripgrep, 3 palabras clave de la semilla | 200 | 48.5 % (97/200) | 0.424 | 6.934 | 13.110 | 1.0 |
+
+montaje T2: 0.905 s
+
+### T2 consultas escritas a mano (54 consultas, 5 repeticiones; «frío» = primera pasada tras montar)
+
+| tarea | método | n | éxito@1 | P@10 | p50 (ms) | p99 (ms) | acciones |
+|---|---|---:|---:|---:|---:|---:|---:|
+| T2-K | ripgrep (palabras de la consulta, sin vacías) | 27 | 81.5 % (22/27) | 0.614 | 8.257 | 34.056 | 1.0 |
+| T2-K | TF-IDF plano 1024d (coseno) | 27 | 96.3 % (26/27) | 0.672 | 1.274 | 2.310 | 0.0 |
+| T2-K | híbrido rg → cd en poincare-fs, frío | 27 | 81.5 % (22/27) | 0.303 | 16.569 | 139.775 | 35.7 |
+| T2-K | híbrido rg → cd en poincare-fs, caliente | 27 | 81.5 % (22/27) | 0.303 | 10.485 | 36.619 | 35.7 |
+| T2-K | agente que navega poincare-fs, frío | 27 | 22.2 % (6/27) | 0.211 | 1.685 | 9.776 | 28.5 |
+| T2-K | agente que navega poincare-fs, caliente | 27 | 22.2 % (6/27) | 0.211 | 1.034 | 10.724 | 28.5 |
+| T2-D | ripgrep (palabras de la consulta, sin vacías) | 27 | 74.1 % (20/27) | 0.562 | 9.152 | 37.652 | 1.0 |
+| T2-D | TF-IDF plano 1024d (coseno) | 27 | 81.5 % (22/27) | 0.662 | 1.273 | 3.074 | 0.0 |
+| T2-D | híbrido rg → cd en poincare-fs, frío | 27 | 74.1 % (20/27) | 0.258 | 18.831 | 46.882 | 35.7 |
+| T2-D | híbrido rg → cd en poincare-fs, caliente | 27 | 74.1 % (20/27) | 0.258 | 12.967 | 32.449 | 35.7 |
+| T2-D | agente que navega poincare-fs, frío | 27 | 22.2 % (6/27) | 0.174 | 1.568 | 5.413 | 27.4 |
+| T2-D | agente que navega poincare-fs, caliente | 27 | 22.2 % (6/27) | 0.174 | 1.036 | 3.802 | 27.4 |
+| T2-todas | ripgrep (palabras de la consulta, sin vacías) | 54 | 77.8 % (42/54) | 0.588 | 8.893 | 34.525 | 1.0 |
+| T2-todas | TF-IDF plano 1024d (coseno) | 54 | 88.9 % (48/54) | 0.667 | 1.274 | 2.310 | 0.0 |
+| T2-todas | híbrido rg → cd en poincare-fs, frío | 54 | 77.8 % (42/54) | 0.281 | 17.280 | 73.328 | 35.7 |
+| T2-todas | híbrido rg → cd en poincare-fs, caliente | 54 | 77.8 % (42/54) | 0.281 | 11.087 | 33.946 | 35.7 |
+| T2-todas | agente que navega poincare-fs, frío | 54 | 22.2 % (12/54) | 0.193 | 1.661 | 8.996 | 27.9 |
+| T2-todas | agente que navega poincare-fs, caliente | 54 | 22.2 % (12/54) | 0.193 | 1.034 | 7.218 | 27.9 |
+
+fallas T2 (primera pasada):
+  agente: ["q04K", "q05D", "q11D", "q12K", "q16K", "q17D", "q18K", "q19D", "q20K", "q21D", "q22K", "q23D", "q24K", "q25D", "q26K", "q27D", "q28K", "q29D", "q30K", "q31D", "q32K", "q33D", "q34K", "q35D", "q36K", "q37D", "q38K", "q39D", "q40K", "q41D", "q42K", "q43D", "q44K", "q45D", "q46K", "q47D", "q48K", "q49D", "q50K", "q51D", "q52K", "q53D"]
+  agente-frio: ["q04K", "q05D", "q11D", "q12K", "q16K", "q17D", "q18K", "q19D", "q20K", "q21D", "q22K", "q23D", "q24K", "q25D", "q26K", "q27D", "q28K", "q29D", "q30K", "q31D", "q32K", "q33D", "q34K", "q35D", "q36K", "q37D", "q38K", "q39D", "q40K", "q41D", "q42K", "q43D", "q44K", "q45D", "q46K", "q47D", "q48K", "q49D", "q50K", "q51D", "q52K", "q53D"]
+  hibrido: ["q17D", "q22K", "q26K", "q33D", "q35D", "q36K", "q37D", "q40K", "q41D", "q43D", "q49D", "q50K"]
+  hibrido-frio: ["q17D", "q22K", "q26K", "q33D", "q35D", "q36K", "q37D", "q40K", "q41D", "q43D", "q49D", "q50K"]
+  rg: ["q17D", "q22K", "q26K", "q33D", "q35D", "q36K", "q37D", "q40K", "q41D", "q43D", "q49D", "q50K"]
+  tfidf: ["q27D", "q29D", "q34K", "q41D", "q49D", "q53D"]
+faiss 1.15.1: índice IndexFlatIP con 1000 vectores en 2.962 ms (1 hilo)
+| tarea | método | n | éxito@1 | P@10 | p50 (ms) | p99 (ms) | acciones |
+|---|---|---:|---:|---:|---:|---:|---:|
+| T1 | FAISS IndexFlatIP (TF-IDF 1024d) | 200 | 84.0 % (168/200) | 0.629 | 0.144 | 0.238 | 0.0 |
+| T2-K | FAISS IndexFlatIP (TF-IDF 1024d) | 27 | 96.3 % (26/27) | 0.672 | 0.136 | 0.174 | 0.0 |
+| T2-D | FAISS IndexFlatIP (TF-IDF 1024d) | 27 | 81.5 % (22/27) | 0.662 | 0.134 | 0.170 | 0.0 |
+| T2-todas | FAISS IndexFlatIP (TF-IDF 1024d) | 54 | 88.9 % (48/54) | 0.667 | 0.142 | 0.180 | 0.0 |
