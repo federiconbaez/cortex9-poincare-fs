@@ -1,0 +1,1 @@
+En Rust cada valor tiene un único dueño. El ownership y el borrow checker del compilador impiden punteros colgantes; los préstamos mutables son exclusivos y los lifetimes acotan cuánto vive una referencia.

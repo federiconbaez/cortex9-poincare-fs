@@ -1,0 +1,1 @@
+eBPF permite cargar programas verificados en el kernel Linux. El verificador del kernel comprueba que el programa termina; los mapas eBPF comparten datos con el espacio de usuario.

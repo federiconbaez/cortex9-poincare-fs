@@ -1,0 +1,1 @@
+FUSE deja implementar un sistema de archivos en espacio de usuario: el kernel Linux reenvía lookup, getattr, readdir y read a un proceso por /dev/fuse.

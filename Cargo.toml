@@ -1,0 +1,14 @@
+[package]
+name = "poincare-fs"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+description = "Sistema de archivos FUSE donde los directorios son proyecciones sobre el disco de Poincaré"
+license = "MIT"
+
+[dependencies]
+fuser = { version = "0.15", default-features = false }
+libc = "0.2"
+
+[dev-dependencies]
+proptest = "1"

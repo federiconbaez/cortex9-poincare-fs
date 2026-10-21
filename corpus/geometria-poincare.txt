@@ -1,0 +1,1 @@
+El disco de Poincaré modela la geometría hiperbólica: las rectas son arcos ortogonales al borde y la distancia crece sin límite al acercarse al borde del disco.

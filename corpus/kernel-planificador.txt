@@ -1,0 +1,1 @@
+El planificador del kernel Linux reparte la CPU entre hilos. sched_ext permite escribir el planificador en eBPF y cargarlo en el kernel sin recompilar.

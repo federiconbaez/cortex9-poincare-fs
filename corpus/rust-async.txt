@@ -1,0 +1,1 @@
+Rust async con tokio: las futures son perezosas, el runtime las sondea con poll y el compilador transforma cada async fn en una máquina de estados sin asignar memoria por tarea.

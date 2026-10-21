@@ -1,0 +1,1 @@
+Cargo compila el crate, resuelve dependencias de crates.io, corre cargo test y cargo clippy. El compilador de Rust y cargo build producen binarios rápidos.
