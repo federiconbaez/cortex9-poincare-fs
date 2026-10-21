@@ -1,0 +1,6 @@
+corpus: /tmp/pfs-valor/c1k (1000 docs, 27 temas), huella sha256(nombre\0 largo contenido...) = 43e73b619d17175a2a7043e7852fd6979b8b3d6b403bdcd1f9e5061b958a039b
+semillas: T1' 20261021, T2' 20261022; anonimización Rng(2026), T1 original Rng(7) (iguales a src/valor.rs)
+T1': 200 semillas, intersección con T1 = 0; T2': 54 consultas
+sha256 60e6654bdd379693151b1ce38b9415ed6c1fb35d530783dd9f6762d82f12f9be  generar_heldout.py
+sha256 9b14c0ae97341da68b1febcd15e0a8571485f4733b6655e596d45d6df72cf04d  t1p-semillas.tsv
+sha256 811ed794a03bf1aa5a7d14575ee848382176f7c3a493d20b045660a601e7445e  t2p-consultas.tsv

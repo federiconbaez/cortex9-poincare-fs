@@ -1,0 +1,55 @@
+# tema	tipo	consulta	fuente   (T2': generadas automáticamente, splitmix64 semilla 20261022; K = 3 términos de IDF alto, S = tramo contiguo de 3-8 palabras)
+asyncio	K	causes sslcontext connections	d00472
+asyncio	S	low to zero as well and	d00431
+collections	K	preserves wiki witch	d00468
+collections	S	org wiki multiset	d00468
+concurrent	K	shutting update drain	d00687
+concurrent	S	the interpreter is shutting down	d00560
+ctypes	K	link dlopen members	d00326
+ctypes	S	issue for why this	d00206
+curses	K	initializes sane enter	d00210
+curses	S	stripspaces off or end of line stripspaces on	d00475
+dbm	K	inconsistent commit setitem	d00509
+dbm	S	are tested for	d00832
+email	K	defect envelope continuation	d00599
+email	S	complex with lots of rules	d00111
+html	K	spacing dash micro	d00325
+html	S	argument the data	d00976
+http	K	derives expires cookiejar	d00347
+http	S	what is for or cookies txt	d00545
+importlib	K	notimplementederror filenotfounderror pathlib	d00727
+importlib	S	star add call intrinsic python shrink the load	d00419
+json	K	pretty worse compact	d00712
+json	S	to also allow them many encoders	d00567
+logging	K	merge adapter individual	d00847
+logging	S	with the last trailing newline	d00982
+multiprocessing	K	undocumented sockets forkserver	d00681
+multiprocessing	S	licensed to psf under contributor agreement	d00855
+pathlib	K	filesystem selectively users	d00290
+pathlib	S	make the path absolute resolving	d00724
+re	K	compilation operators lineno	d00322
+re	S	argument tuples parse re	d00805
+sqlite3	K	wrote plainly acknowledgment	d00915
+sqlite3	S	foreign key violation return	d00130
+sysconfig	K	sysconfigdata foreign generate	d00109
+sysconfig	S	when modify this	d00872
+tkinter	K	pythonware symbols dialog	d00609
+tkinter	S	one return current scale value set new	d00607
+tomllib	K	declaration opened dotted	d00077
+tomllib	S	date raises valueerror if the match	d00222
+unittest	K	impossible coroutines propagate	d00439
+unittest	S	that the mock was called at least	d00466
+urllib	K	lowercase expensive passes	d00784
+urllib	S	included in safe it also	d00061
+venv	K	quoting modification shell	d00194
+venv	S	re the same file gh don display	d00786
+wsgiref	K	inputs streams usable	d00602
+wsgiref	S	these will be sorted in the order	d00941
+xml	K	document constant defaulting	d00589
+xml	S	but their order is not guaranteed end the	d00640
+xmlrpc	K	labs consequential marshalling	d00482
+xmlrpc	S	the chain starts with if	d00331
+zipfile	K	entries mask compression	d00711
+zipfile	S	this codebase is shared between	d00952
+zoneinfo	K	warning pragma zones	d00562
+zoneinfo	S	positive dst the ambiguous	d00269
