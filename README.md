@@ -117,7 +117,7 @@ sh bench/correr.sh                   # benchmark completo (ver abajo)
 * **FUSE‑over‑io_uring no existe en este kernel.** Es 6.12, y esa función entró en el 6.14. `/sys/module/fuse/parameters/` solo tiene `allow_sys_admin_access`, `max_user_bgreq` y `max_user_congthresh`: no aparece `enable_uring`. Tampoco hay `/proc/config.gz` para consultar `CONFIG_FUSE_IO_URING`. Por eso el canal kernel↔FUSE sigue siendo `/dev/fuse` clásico.
 * **io_uring sí funciona para la E/S del almacén** (`kernel.io_uring_disabled = 0`, sin seccomp). `auto` elige `Uring` en esta máquina, y el test lo exige.
 * **El respaldo está probado de verdad.** `tests/seccomp.rs` ejecuta el binario con un filtro seccomp que hace fallar `io_uring_setup` con ENOSYS. Con eso, `auto` cae a `Pread` y lee exactamente los mismos bytes (misma huella FNV), y `uring` forzado falla con un error explícito. Los tests unitarios leen con ambos modos archivos de 0 B, 4 KiB y 3 MiB (este último en varias lecturas) y 200 archivos chicos.
-* Tiempos de lectura del corpus por io_uring: 18 docs en menos de 1 ms, 1000 en 13 ms, 10 000 en 126 ms (incluye abrir los archivos).
+* **io_uring no es más rápido acá.** Leyendo 10 000 archivos (4,75 MB, ya en la caché de páginas) con `es-info`, io_uring tardó 0,052 s y `pread` 0,027 s, con la máquina cargada. El costo dominante es abrir los archivos, que se hace con `open` normal (sin `IORING_OP_OPENAT`). io_uring está por el requisito y por la arquitectura, no porque se haya medido una mejora.
 
 ### Rendimiento (montado, caminata aleatoria por `cd`)
 
@@ -161,7 +161,7 @@ Qué muestran los números:
 
 ## Qué NO está verificado
 
-* **FUSE‑over‑io_uring**: no se usa ni se probó, porque el kernel 6.12 no lo trae. io_uring se usa solo para leer el almacén (corpus e índice) al montar.
+* **FUSE‑over‑io_uring**: no se usa ni se probó, porque el kernel 6.12 no lo trae. io_uring se usa solo para leer el almacén (corpus e índice) al montar, y en esta máquina no fue más rápido que `pread` (0,052 s contra 0,027 s con 10 000 archivos).
 * **`cat` no lee del disco en el momento.** El corpus se precarga completo en memoria al montar (por io_uring). No hay lectura bajo demanda ni prefetch incremental, y los cambios en el corpus no se ven hasta volver a montar.
 * **Benchmarks con ruido.** Se midió con la máquina compartida a load average ~20 en 8 núcleos. No se midió en una máquina quieta ni en la de Federico. No se usó criterion ni hyperfine, sino un arnés propio. Sin LRU con 10 000 docs se hicieron solo 300 pasos y una corrida.
 * **La calidad semántica tiene límites.**
