@@ -1,0 +1,24 @@
+corpus 1000 docs, dim bola 16, dim tfidf 1024
+| conjunto | variante | n | recall@1 | P@10 |
+|---|---|---:|---:|---:|
+| T1' | bola pura EUCLÍDEA 16d (mismas coords) | 200 | 80.0 % (160/200) | 0.695 |
+| T1' | bola pura hiperbólica (=@similar) | 200 | 78.0 % (156/200) | 0.677 |
+| T1' | híbrido, 2–10 EUCLÍDEO 16d | 200 | 82.5 % (165/200) | 0.695 |
+| T1' | híbrido, 2–10 hiperbólico (=@similar-hibrido) | 200 | 82.5 % (165/200) | 0.689 |
+| T1' | solo TF-IDF coseno (=FAISS) | 200 | 82.5 % (165/200) | 0.608 |
+TIEMPO T1' | knn denso TF-IDF 1024d f32 (fuerza bruta, Rust) | p50 0.5846 ms
+TIEMPO T1' | knn euclídeo 16d SoA f32 | p50 0.0069 ms
+TIEMPO T1' | knn hiperbólico 16d (bola, f32+reorden f64) | p50 0.0117 ms
+TIEMPO T1' | lectura de vecinos TF-IDF precalculados (top-10) | p50 0.0008 ms
+| T1'' | bola pura EUCLÍDEA 16d (mismas coords) | 200 | 78.0 % (156/200) | 0.659 |
+| T1'' | bola pura hiperbólica (=@similar) | 200 | 78.0 % (156/200) | 0.637 |
+| T1'' | híbrido, 2–10 EUCLÍDEO 16d | 200 | 81.5 % (163/200) | 0.669 |
+| T1'' | híbrido, 2–10 hiperbólico (=@similar-hibrido) | 200 | 81.5 % (163/200) | 0.652 |
+| T1'' | solo TF-IDF coseno (=FAISS) | 200 | 81.5 % (163/200) | 0.582 |
+TIEMPO T1'' | knn denso TF-IDF 1024d f32 (fuerza bruta, Rust) | p50 0.5663 ms
+TIEMPO T1'' | knn euclídeo 16d SoA f32 | p50 0.0071 ms
+TIEMPO T1'' | knn hiperbólico 16d (bola, f32+reorden f64) | p50 0.0121 ms
+TIEMPO T1'' | lectura de vecinos TF-IDF precalculados (top-10) | p50 0.0008 ms
+| T2' | híbrido, 2–10 hiperbólico (=@buscar) | 54 | 79.6 % (43/54) | 0.357 |
+| T2' | híbrido, 2–10 EUCLÍDEO 16d | 54 | 79.6 % (43/54) | 0.361 |
+| T2' | solo TF-IDF coseno (=FAISS) | 54 | 79.6 % (43/54) | 0.337 |

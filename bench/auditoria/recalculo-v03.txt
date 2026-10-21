@@ -1,0 +1,36 @@
+## bench/valor3-corrida1
+T1'	fs-similar	R@1 78.0 rg 50.0 faiss 82.5	p50 0.0433 rg 6.5166 faiss 0.1278	t/rg 0.007 t/faiss 0.339	FALLA
+T2'	fs-buscar-hibrido	R@1 79.6 rg 68.5 faiss 79.6	p50 0.0505 rg 6.6617 faiss 0.1337	t/rg 0.008 t/faiss 0.377	PASA
+T2'	fs-buscar-bola	R@1 13.0 rg 68.5 faiss 79.6	p50 0.0552 rg 6.6617 faiss 0.1337	t/rg 0.008 t/faiss 0.413	FALLA
+T1''	fs-similar-hibrido	R@1 81.5 rg 50.5 faiss 81.5	p50 0.0368 rg 6.5847 faiss 0.1269	t/rg 0.006 t/faiss 0.290	PASA
+T1'	fs-similar-hibrido	R@1 82.5 rg 50.0 faiss 82.5	p50 0.0430 rg 6.5166 faiss 0.1278	t/rg 0.007 t/faiss 0.336	PASA
+## bench/valor3-corrida2
+T1'	fs-similar	R@1 78.0 rg 50.0 faiss 82.5	p50 0.0430 rg 6.4491 faiss 0.1378	t/rg 0.007 t/faiss 0.312	FALLA
+T2'	fs-buscar-hibrido	R@1 79.6 rg 68.5 faiss 79.6	p50 0.0691 rg 6.7915 faiss 0.1443	t/rg 0.010 t/faiss 0.479	PASA
+T2'	fs-buscar-bola	R@1 13.0 rg 68.5 faiss 79.6	p50 0.0755 rg 6.7915 faiss 0.1443	t/rg 0.011 t/faiss 0.523	FALLA
+T1''	fs-similar-hibrido	R@1 81.5 rg 50.5 faiss 81.5	p50 0.0372 rg 6.5567 faiss 0.1386	t/rg 0.006 t/faiss 0.268	PASA
+T1'	fs-similar-hibrido	R@1 82.5 rg 50.0 faiss 82.5	p50 0.0403 rg 6.4491 faiss 0.1378	t/rg 0.006 t/faiss 0.293	PASA
+## bench/valor3-intercalado
+T1'	fs-similar	R@1 78.0 rg 50.0 faiss 82.5	p50 0.1130 rg 6.6346 faiss 0.1812	t/rg 0.017 t/faiss 0.624	FALLA
+T2'	fs-buscar-hibrido	R@1 79.6 rg 68.5 faiss 79.6	p50 0.1410 rg 6.4113 faiss 0.1701	t/rg 0.022 t/faiss 0.829	FALLA
+T2'	fs-buscar-bola	R@1 13.0 rg 68.5 faiss 79.6	p50 0.1430 rg 6.4113 faiss 0.1701	t/rg 0.022 t/faiss 0.841	FALLA
+T1''	fs-similar-hibrido	R@1 81.5 rg 50.5 faiss 81.5	p50 0.1060 rg 6.4448 faiss 0.1772	t/rg 0.016 t/faiss 0.598	PASA
+T1'	fs-similar-hibrido	R@1 82.5 rg 50.0 faiss 82.5	p50 0.1103 rg 6.6346 faiss 0.1812	t/rg 0.017 t/faiss 0.608	PASA
+## bench/auditoria/valor3-corridaaudit1
+T1'	fs-similar	R@1 78.0 rg 50.0 faiss 82.5	p50 0.0528 rg 6.8432 faiss 0.1363	t/rg 0.008 t/faiss 0.387	FALLA
+T2'	fs-buscar-hibrido	R@1 79.6 rg 68.5 faiss 79.6	p50 0.0791 rg 6.9332 faiss 0.1375	t/rg 0.011 t/faiss 0.575	PASA
+T2'	fs-buscar-bola	R@1 13.0 rg 68.5 faiss 79.6	p50 0.0587 rg 6.9332 faiss 0.1375	t/rg 0.008 t/faiss 0.427	FALLA
+T1''	fs-similar-hibrido	R@1 81.5 rg 50.5 faiss 81.5	p50 0.0388 rg 7.1311 faiss 0.1388	t/rg 0.005 t/faiss 0.279	PASA
+T1'	fs-similar-hibrido	R@1 82.5 rg 50.0 faiss 82.5	p50 0.0455 rg 6.8432 faiss 0.1363	t/rg 0.007 t/faiss 0.334	PASA
+## bench/auditoria/valor3-corridaaudit2
+T1'	fs-similar	R@1 78.0 rg 50.0 faiss 82.5	p50 0.0419 rg 6.8250 faiss 0.1284	t/rg 0.006 t/faiss 0.326	FALLA
+T2'	fs-buscar-hibrido	R@1 79.6 rg 68.5 faiss 79.6	p50 0.0577 rg 6.5072 faiss 0.1281	t/rg 0.009 t/faiss 0.451	PASA
+T2'	fs-buscar-bola	R@1 13.0 rg 68.5 faiss 79.6	p50 0.0676 rg 6.5072 faiss 0.1281	t/rg 0.010 t/faiss 0.528	FALLA
+T1''	fs-similar-hibrido	R@1 81.5 rg 50.5 faiss 81.5	p50 0.0456 rg 6.4030 faiss 0.1293	t/rg 0.007 t/faiss 0.353	PASA
+T1'	fs-similar-hibrido	R@1 82.5 rg 50.0 faiss 82.5	p50 0.0386 rg 6.8250 faiss 0.1284	t/rg 0.006 t/faiss 0.300	PASA
+## bench/auditoria/valor3-corridaauditI
+T1'	fs-similar	R@1 78.0 rg 50.0 faiss 82.5	p50 0.1157 rg 6.4845 faiss 0.1835	t/rg 0.018 t/faiss 0.631	FALLA
+T2'	fs-buscar-hibrido	R@1 79.6 rg 68.5 faiss 79.6	p50 0.1505 rg 6.5460 faiss 0.1681	t/rg 0.023 t/faiss 0.895	FALLA
+T2'	fs-buscar-bola	R@1 13.0 rg 68.5 faiss 79.6	p50 0.1530 rg 6.5460 faiss 0.1681	t/rg 0.023 t/faiss 0.910	FALLA
+T1''	fs-similar-hibrido	R@1 81.5 rg 50.5 faiss 81.5	p50 0.1090 rg 6.8467 faiss 0.1731	t/rg 0.016 t/faiss 0.630	PASA
+T1'	fs-similar-hibrido	R@1 82.5 rg 50.0 faiss 82.5	p50 0.1140 rg 6.4845 faiss 0.1835	t/rg 0.018 t/faiss 0.621	PASA

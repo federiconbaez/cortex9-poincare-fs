@@ -1,0 +1,6 @@
+T1' fs-similar-hibrido top1 == top1 FAISS: 200 / 200
+T1' fs-similar top1 == top1 FAISS: 80 / 200
+T1'' fs-similar-hibrido top1 == top1 FAISS: 200 / 200
+T1'' fs-similar top1 == top1 FAISS: 63 / 200
+T2' fs-buscar-hibrido top1 == top1 FAISS: 54 / 54
+T2' fs-buscar-bola top1 == top1 FAISS: 1 / 54

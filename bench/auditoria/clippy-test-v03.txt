@@ -1,0 +1,16 @@
+## clippy (clon /workspace/audit-clones/02-v03 @3d09884)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 12.83s
+clippy exit 0
+## cargo test --release
+     Running unittests src/lib.rs (target/release/deps/poincare_fs-9c598777aaea0df7)
+test result: ok. 62 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.40s
+     Running unittests src/main.rs (target/release/deps/poincare_fs-827fe299c940885b)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/directo.rs (target/release/deps/directo-4e55e4e89167f7a4)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+     Running tests/montaje.rs (target/release/deps/montaje-57e41c7e510943ec)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s
+     Running tests/seccomp.rs (target/release/deps/seccomp-b5d70683a0371183)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test exit 0
