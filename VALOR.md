@@ -80,7 +80,7 @@ Salida completa en [`bench/valor-resultados-2026-10-21.txt`](bench/valor-resulta
 | agente que navega poincare-fs, caliente | 22,2 % | 22,2 % | **22,2 %** (12/54) | 0,193 | 0,965 | 3,221 | 27,9 |
 
 * **El híbrido empeora a rg.** Tiene el mismo recall@1, porque el primer resultado es el de rg, pero la P@10 baja de 0,588 a 0,281: completar con la vista del FS agrega menos documentos relevantes que el propio ranking de rg. Además tarda 1,14× rg, porque hay que navegar hasta el documento.
-* **El agente que solo usa el FS acierta en 12/54.** Las fallas se concentran en los temas chicos (de `concurrent` en adelante en la lista), que no aparecen cerca de la raíz.
+* **El agente que solo usa el FS acierta en 12/54.** Falla en todas las consultas de los temas con 46 documentos o menos (de `multiprocessing` en adelante en la lista), en las dos de `tkinter` y en una de `logging` y otra de `http`. Solo acierta en temas grandes que aparecen cerca de la raíz.
 
 ## Corpus de 18 documentos (6 temas), solo T1
 
