@@ -1,3 +1,5 @@
+> Nota (2026-10-22): el historial se reescribió y los hashes citados aquí son anteriores; ver [docs/HASHES.md](docs/HASHES.md). / History was rewritten; hashes cited here are pre-rewrite, see docs/HASHES.md.
+
 # Auditoría de Research: re-intento v0.3 del sistema 2 (HEAD `3d09884`)
 
 Auditora: Federica Research Sentinel. Fecha: 21/10/2026, 00:52–01:05 (hora de Buenos Aires, UTC−3).

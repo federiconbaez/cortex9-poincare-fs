@@ -1,3 +1,5 @@
+> Nota (2026-10-22): el historial se reescribió y los hashes citados aquí son anteriores; ver [docs/HASHES.md](docs/HASHES.md). / History was rewritten; hashes cited here are pre-rewrite, see docs/HASHES.md.
+
 # Auditoría de Research — experimento de VALOR (sistema 2)
 
 - **Auditado:** HEAD `849983a` (sobre `d69f8cb`), árbol limpio. 21/10/2026 ~00:10 (Buenos Aires, UTC−3), en la box (8 núcleos, load 7–9).
