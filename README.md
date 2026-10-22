@@ -1,5 +1,11 @@
 # 02-poincare-fs
 
+> **ES:** Sistema de archivos FUSE en Rust (solo lectura) que organiza documentos con embeddings en geometría hiperbólica (bola de Poincaré). Compilar/probar: `cargo build --release && cargo test --release`.
+> **EN:** Read-only Rust FUSE filesystem that organizes documents with hyperbolic (Poincaré ball) embeddings. Build/test: `cargo build --release && cargo test --release`.
+>
+> **Estado / Status (AUDIT.md, AUDIT-valor-v03.md):** **FALLA el umbral #2 / FAILS threshold #2 — «valor no demostrado».** Como FS navegable pierde en recall@1 contra ripgrep y FAISS. En v0.3, el diseño pre-registrado no pasa completo: `@buscar` híbrido pasa en caliente, `@similar` (bola pura) falla el recall@1 contra FAISS (78,0 % vs 82,5 %). Licencia / License: Apache-2.0.
+
+
 Sistema de archivos FUSE en Rust (crate `fuser` 0.15, solo lectura) donde los
 directorios **no son un árbol**: cada directorio es una *proyección* de un
 corpus de documentos sobre la **bola de Poincaré de dimensión d** (16 por
